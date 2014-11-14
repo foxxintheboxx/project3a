@@ -1,20 +1,20 @@
 #!/usr/bin/env python
         
 import socket, struct
-from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
+# from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 
 # TODO: Feel free to import any Python standard moduless as necessary.
 # (http://docs.python.org/2/library/)
 # You must NOT use any 3rd-party libraries, though.
 
 class Firewall:
-    def __init__(self, config, iface_int, iface_ext):
+    def __init__(self, config = None, iface_int = None, iface_ext = None):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
         self.geo_array = []
         # TODO: Load the firewall rules (from rule_filename) here.
-        print 'I am supposed to load rules from %s, but I am feeling lazy.' % \
-                config['rule']
+        # print 'I am supposed to load rules from %s, but I am feeling lazy.' % \
+        #         config['rule']
 
 
         # TODO: Load the GeoIP DB ('geoipdb.txt') as well.
@@ -27,8 +27,9 @@ class Firewall:
             content = file.read()
             for line in content.split("\n"):
                 elements = line.split(" ")
-                g_node = GeoIPNode(elements[2], self.ip2int(elements[0]), self.ip2int(elements[1]))
-                self.geo_array.append(g_node)
+                if (len(elements) == 3):
+                    g_node = GeoIPNode(elements[2], self.ip2int(elements[0]), self.ip2int(elements[1]))
+                    self.geo_array.append(g_node)
 
 
 
@@ -49,7 +50,7 @@ class Firewall:
 
     def bst_geo_array(self, int_ip, min_index, max_index):
 
-        if min_index == max_index:
+        if min_index == (max_index - 1):
             return self.geo_array[min_index]
         total = min_index + max_index
         mid = 0
@@ -64,10 +65,12 @@ class Firewall:
             return self.bst_geo_array(int_ip, min_index, mid)
         else:
             return self.bst_geo_array(int_ip, mid, max_index)
-            
-            #go up
 
-
+    def test(self,ip,country):
+        if self.bst_geo_array(self.ip2int(ip),0,len(self.geo_array)).country == country:
+            print "wee!"
+        else:
+            print "fuuuuuu"
 
 '''
 A GeoIPNode is an object holding the a two character string @param country.
@@ -85,6 +88,18 @@ class GeoIPNode(object):
             return False
         return True
 
+
+
+firewall = Firewall()
+firewall.test("203.208.24.255","PH")
+firewall.test("203.170.28.23","HK")
+firewall.test("203.160.48.123","MN")
+firewall.test("194.1.215.0","SK")
+firewall.test("1.0.0.255","AU")
+firewall.test("223.255.255.255", "AU")
+firewall.test("223.255.254.0","SG")
+
+# firewall.test("1.1.2.0", "CN")
 
 
 
