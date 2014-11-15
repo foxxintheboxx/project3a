@@ -12,6 +12,8 @@ class Firewall:
         self.iface_int = iface_int
         self.iface_ext = iface_ext
         self.geo_array = []
+        self.rule_dict = dict()
+
         # TODO: Load the firewall rules (from rule_filename) here.
         # print 'I am supposed to load rules from %s, but I am feeling lazy.' % \
         #         config['rule']
@@ -28,17 +30,54 @@ class Firewall:
                     self.geo_array.append(g_node)
 
 
-
+        with open(config['rule']) as file:
+            content = file.read()
+            rule_dict() = ingest_rules(content)
 
 
 
         # TODO: Also do some initialization if needed.
+    #function to initialize the rules dictionary
+    #input: the whole str contents of rules.conf
+    #output, dictionary of proper form
+        # i.e. {dns: [[verdict, domain],
+        #             [vertict, domain]],
+        #         tcp: [[verdict, ip1, ip2]]
+        #         }
+    def ingest_rules(self,rules_str):
+        ret_dict = dict()
+
+        for line in rules_str.split("\n"):
+            if line == '':
+                continue
+            contents = []
+            elements = line.split(" ")
+            verdict = elements[0]
+            protocol = elements[1]
+            contents = []
+
+            if protocol == "dns":
+                #do dns things
+                contents =[verdict, elements[2]]
+            else:
+                external_ip = elements[2]
+                external_port = elements[3]
+
+            if protocol not in ret_dict:
+                ret_dict[protocol] = []
+
+            ret_dict[protocol].append(contents)
+
+        return ret_dict
+
+
+
 
     # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
-        print pkt 
+        print repr(pkt) 
         pass
 
     #return int
@@ -46,7 +85,7 @@ class Firewall:
         packedIP = socket.inet_aton(ip)
         return struct.unpack("!I", packedIP)[0]
 
-     def bst_geo_array(self, int_ip, min_index, max_index):
+    def bst_geo_array(self, int_ip, min_index, max_index):
 
         if min_index == (max_index - 1):
             return self.geo_array[min_index]

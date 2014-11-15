@@ -32,10 +32,73 @@ class Firewall:
                     self.geo_array.append(g_node)
 
 
+        with open("rules.conf") as file:
+            content = file.read()
+            self.rule_dict = self.ingest_rules(content)
 
-
-
+        print(self.rule_dict)
         # TODO: Also do some initialization if needed.
+
+    def ingest_rules(self,rules_str):
+        ret_dict = dict()
+
+        for line in rules_str.split("\n"):
+            if line == '':
+                continue
+
+            contents = []
+            elements = line.split(" ")
+            verdict = elements[0]
+            protocol = elements[1]
+
+            if protocol == "dns":
+                #do dns things
+                contents =[verdict, elements[2]]
+            else:
+                external_ip = elements[2]
+                external_port = elements[3]
+                contents =[verdict,external_ip,external_port]
+
+            if protocol not in ret_dict:
+                ret_dict[protocol] = []
+
+            ret_dict[protocol].append(contents)
+
+        return ret_dict
+
+    #@protocol should be either udp,tcp,icmp,dns
+    #@port should be "any", a single port(int), or a range tuple([2000-3000])
+    #@ip should be "any", a single IP(1.1.1.1), a 2 string country("AU"), an IP prefix tuple(["1.1.1.0",18])
+    def rule_check(self, protocol, port = None, ip = None, dns = None):
+        verdict = None
+
+        if dns != None:
+            #do dns things
+            pass
+        else:
+            country = self.get_country(ip)
+            condition1 = False
+            condition2 = False
+            #need to go through the dictionary and check to see what the most recent match is
+            for rule in self.rule_dict[protocol]:
+                rule_ip = rule[1]
+                if rule_ip == 'any':
+                    condition1 = True
+                elif type(rule_ip) is str:
+                    if rule_ip == ip:
+                        condition1 = True
+                else:
+                    condition1 = False
+                rule_port = rule[2]
+                if rule_port == 'any':
+                    condition2 = True
+                # elif :
+                else:
+                    condition2 = False
+
+        return verdict
+
+
 
     # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
     # @pkt: the actual data of the IPv4 packet (including IP header)
@@ -47,6 +110,9 @@ class Firewall:
     def ip2int(self, ip):
         packedIP = socket.inet_aton(ip)
         return struct.unpack("!I", packedIP)[0]
+
+    def get_country(self, ip):
+        return self.bst_geo_array(self.ip2int(ip),0,len(self.geo_array)).country
 
     def bst_geo_array(self, int_ip, min_index, max_index):
 
@@ -98,6 +164,7 @@ firewall.test("194.1.215.0","SK")
 firewall.test("1.0.0.255","AU")
 firewall.test("223.255.255.255", "AU")
 firewall.test("223.255.254.0","SG")
+
 
 # firewall.test("1.1.2.0", "CN")
 
