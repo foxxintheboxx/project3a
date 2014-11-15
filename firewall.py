@@ -38,7 +38,7 @@ class Firewall:
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
-        print pkt 
+        print repr(pkt) 
         pass
 
     #return int
@@ -46,7 +46,7 @@ class Firewall:
         packedIP = socket.inet_aton(ip)
         return struct.unpack("!I", packedIP)[0]
 
-     def bst_geo_array(self, int_ip, min_index, max_index):
+    def bst_geo_array(self, int_ip, min_index, max_index):
 
         if min_index == (max_index - 1):
             return self.geo_array[min_index]
