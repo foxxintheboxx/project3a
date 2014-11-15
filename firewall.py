@@ -8,7 +8,7 @@ from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 # You must NOT use any 3rd-party libraries, though.
 
 class Firewall:
-    def __init__(self, config = None, iface_int = None, iface_ext = None):
+    def __init__(self, config = None, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
         self.geo_array = []
