@@ -40,6 +40,7 @@ class Firewall:
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
+        print pkt 
         pass
 
     #return int
