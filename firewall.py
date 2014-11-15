@@ -64,7 +64,7 @@ class Firewall:
             return self.bst_geo_array(int_ip, min_index, mid)
         else:
             return self.bst_geo_array(int_ip, mid, max_index)
-            
+
             #go up
 
 
