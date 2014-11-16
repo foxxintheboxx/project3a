@@ -284,12 +284,28 @@ class Firewall:
             return None
         offset = offset + 12
 
-        question = pkt[offset: offset + 6]
-        q_name_byte = question[0 : 2]
-        q_type_byte = question[2 : 4]
-        q_class_byte = question[4 : 6]
+        question = pkt[offset:]
+        qname_end = 0
+        byte_val = struct.unpack("!B", question[qname_end)[0]
+        q_name = []
+        while byte_val != 0x00:
+            length = byte_val
+            string = ""
 
-        q_name = struct.unpack("!H", q_name_byte)[0]
+            while length > 0:
+                char_byte = struct.unpack("!B", question[qname_end])[0]
+                string += chr(char_byte)
+                length -= 1
+                qname_end += 1
+
+            q_name.append(string)
+            byte_val = struct.unpack("!B", question[qname_end)[0]
+            qname_end += 1
+
+
+        q_type_byte = question[qname_end : qname_end + 2]
+        q_class_byte = question[qname_end + 2: q_name + 4]
+
         q_type = struct.unpack("!H", q_type_byte)[0]
         q_class = struct.unpack("!H", q_class_byte)[0]
 
