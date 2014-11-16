@@ -45,7 +45,7 @@ class Firewall:
 
         with open(config['rule']) as file:
             content = file.read()
-            rule_dict() = ingest_rules(content)
+            rule_dict = self.ingest_rules(content)
 
 
 
@@ -239,7 +239,7 @@ class Firewall:
                 # elif :
                 else:
                     condition2 = False
-                if condition1 and condition2
+                if condition1 and condition2:
                     verdict = rule_ip[0]
 
         if verdict == "pass":
@@ -272,14 +272,14 @@ class Firewall:
             #go up
 
     def parse_dns(self, pkt, offset):
-        dns_header = [pkt + offset : pkt + offset + 12]
+        dns_header = pkt[offset:offset+12]
         qd_count_byte = dns_header[4:6]
         qd_count = struct.unpack("!H", qd_count_byte)[0]
         if qd_count != 1:
             return None
         offset = offset + 12
 
-        question = [offset: offset + 6]
+        question = pkt[offset: offset + 6]
         q_name_byte = question[0 : 2]
         q_type_byte = question[2 : 4]
         q_class_byte = question[4 : 6]
