@@ -113,9 +113,16 @@ class Firewall:
                 packet.src_port = self.get_src_port_std(pkt, start_trans_header)
                 packet.dst_port = self.get_dst_port_std(pkt, start_trans_header)
                 ## UDP and the destination port is going to be 53
+
                 if pkt_dir == PKT_DIR_OUTGOING and packet.dst_port == 53:
-                    packet.is_DNS = True
-                    packet.dns_query = self.parse_dns(pkt, start_trans_header + 8)
+                    try:
+                        result = self.parse_dns(pkt, start_trans_header + 8)
+                        if result != None:
+                            packet.dns_query = result
+                            packet.is_DNS = True
+                    except Exception, e:
+                        print e
+                    
 
             elif packet.protocol == "ICMP":
                 packet.icmp_type = self.get_icmp_type(pkt, start_trans_header)
@@ -123,7 +130,7 @@ class Firewall:
             else:
                 self.send_pkt(pkt_dir, pkt)
 
-        except:
+        except Exception, e:
             print "fuck me"
             return 
 
@@ -265,7 +272,36 @@ class Firewall:
             #go up
 
     def parse_dns(self, pkt, offset):
-        dns_hea
+        dns_header = [pkt + offset : pkt + offset + 12]
+        qd_count_byte = dns_header[4:6]
+        qd_count = struct.unpack("!H", qd_count_byte)[0]
+        if qd_count != 1:
+            return None
+        offset = offset + 12
+
+        question = [offset: offset + 6]
+        q_name_byte = question[0 : 2]
+        q_type_byte = question[2 : 4]
+        q_class_byte = question[4 : 6]
+
+        q_name = struct.unpack("!H", q_name_byte)[0]
+        q_type = struct.unpack("!H", q_type_byte)[0]
+        q_class = struct.unpack("!H", q_class_byte)[0]
+
+        if q_type != 28 or q_type != 1:
+            return None
+
+        if q_class != 1:
+            return None
+
+        return q_name
+
+
+        
+
+
+
+
 
 
 '''
