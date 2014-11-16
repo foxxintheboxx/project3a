@@ -22,66 +22,20 @@ class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
-        self.geo_array = []
-        self.rule_dict = dict()
+
+        with open("geoipdb.txt") as file:
+            geoipdb_content = file.read()
+        with open(config['rule']) as file:
+            rule_content = file.read()
+        fw_rules = FireWall_Rules(rule_content,geoipdb_content)
 
         # TODO: Load the firewall rules (from rule_filename) here.
         # print 'I am supposed to load rules from %s, but I am feeling lazy.' % \
         #         config['rule']
 
 
-        # TODO: Load the GeoIP DB ('geoipdb.txt') as well.
-
-        with open("geoipdb.txt") as file:
-            content = file.read()
-            for line in content.split("\n"):
-                elements = line.split(" ")
-                if (len(elements) == 3):
-                    g_node = GeoIPNode(elements[2], self.ip2int(elements[0]), self.ip2int(elements[1]))
-                    self.geo_array.append(g_node)
-
-
-
-
-        with open(config['rule']) as file:
-            content = file.read()
-            rule_dict = self.ingest_rules(content)
-
-
-
-        # TODO: Also do some initialization if needed.
-    #function to initialize the rules dictionary
-    #input: the whole str contents of rules.conf
-    #output, dictionary of proper form
-        # i.e. {dns: [[verdict, domain],
-        #             [vertict, domain]],
-        #         tcp: [[verdict, ip1, ip2]]
-        #         }
-    def ingest_rules(self,rules_str):
-        ret_dict = dict()
-
-        for line in rules_str.split("\n"):
-            if line == '':
-                continue
-            contents = []
-            elements = line.split(" ")
-            verdict = elements[0]
-            protocol = elements[1]
-            contents = []
-
-            if protocol == "dns":
-                #do dns things
-                contents =[verdict, elements[2]]
-            else:
-                external_ip = elements[2]
-                external_port = elements[3]
-
-            if protocol not in ret_dict:
-                ret_dict[protocol] = []
-
-            ret_dict[protocol].append(contents)
-
-        return ret_dict
+        # TODO: Load the GeoIP DB ('geoipdb.txt') as well
+        packet_test = Packet
 
 
 
@@ -201,59 +155,6 @@ class Firewall:
         unpacked_byte = struct.unpack("!I", address_byte)[0]
         return unpacked_byte
 
-    #@packet is the data structure for a packet with our necessary contents
-    #@return either true or false for whether the packet passed our rule check
-    #packet.protocol should be either udp,tcp,icmp
-    # packet.Port should be against "any", a single port(int), or a range tuple([2000-3000])
-    # packetIp should be checking against "any", a single IP(1.1.1.1), a 2 string country("AU"), an IP prefix tuple(["1.1.1.0",18])
-    def rule_check(self, packet):
-        protocol = packet.protocol
-        port = packet.port
-        ip = packet.dst_port
-        dns_query = packet.dns_query
-        verdict = None
-
-        country = self.get_country(packet.dst_port)
-
-        #do run through of dictionary based rules
-            #for each rule
-                #do comparisons against the IP and Port of the rule
-                #find out which type of IP rule to use based on what rule[1]
-                    #check to see if there is a match
-                #find out which type of 
-        #if dns, then additionally do DNS rule checks second
-
-        if  packet.is_DNS:
-            #do dns things
-            pass
-        else:
-            country = self.get_country(ip)
-            condition1 = False
-            condition2 = False
-            #need to go through the dictionary and check to see what the most recent match is
-            for rule in self.rule_dict[protocol]:
-                rule_ip = rule[1]
-                if rule_ip == 'any':
-                    condition1 = True
-                elif type(rule_ip) is str:
-                    if rule_ip == ip:
-                        condition1 = True
-                else:
-                    condition1 = False
-                rule_port = rule[2]
-                if rule_port == 'any':
-                    condition2 = True
-                # elif :
-                else:
-                    condition2 = False
-                if condition1 and condition2:
-                    verdict = rule_ip[0]
-
-        if verdict == "pass":
-            return True
-        else:
-            return False
-
     #return int
     def ip2int(self, ip):
         packedIP = socket.inet_aton(ip)
@@ -302,8 +203,6 @@ class Firewall:
 
             q_name.append(string)
             byte_val = struct.unpack("!B", question[qname_end])[0]
- 	print qname_end
-	print q_name
 
         q_type_byte = question[qname_end : qname_end + 2]
         q_class_byte = question[qname_end + 2: qname_end + 4]
@@ -322,26 +221,194 @@ class Firewall:
 
         
 
+##main function will be "check_rules"
+##will be initialized when the firewall is    
+## will also store the geoipdb info
+class FireWall_Rules(object):
+
+    def __init__(self, rules_str, geoipdb_str):
+        
+        self.rule_dictionary = self.ingest_rules(rules_str)
+        for rule in rule_dictionary:
+            print rule.verdict, rule.protocol, rule.port_rule, rule.ip_rule 
+        self.geo_array = []
+
+        for line in geoipdb_str.split("\n"):
+            elements = line.split(" ")
+            if (len(elements) == 3):
+                g_node = GeoIPNode(elements[2], self.ip2int(elements[0]), self.ip2int(elements[1]))
+                self.geo_array.append(g_node)
+
+    #@pkt Packet class object
+    #@dir either PKT_DIR_INCOMING, PKT_DIR_OUTGOING
+    #@return True or False
+    def check_rules(self, pkt, dir):
+        #depending on packet type
+        #
+        ext_port = None
+        ext_ip = None
+        if pkt == PKT_DIR_OUTGOING:
+            ext_port = pkt.dest_ip
+            ext_ip = pkt.dst_port
+        else: 
+            ext_port = pkt.src_port
+            ext_ip = pkt.src_ip
+
+        rule_list = rule_dictionary[pkt.protocol]
+        verdict = "drop"
+        for rule in rule_list[]
+            condition1 = False
+            condition2 = False
+            if rule.check_port[ext_port]:
+                condition1 = True
+            if rule.check_ip = [ext_ip]:
+                condition2 = True
+            if condition1 and condition2:
+                verdict = rule.verdict
 
 
 
 
+    # TODO: Also do some initialization if needed.
+    #function to initialize the rules dictionary
+    #input: the whole str contents of rules.conf
+    #output, dictionary of proper form
+        # i.e. {dns: [[verdict, domain],
+        #             [vertict, domain]],
+        #         tcp: [[verdict, ip1, ip2]]
+        #         }
+    def ingest_rules(self,rules_str):
+        ret_dict = dict()
 
-'''
-A GeoIPNode is an object holding the a two character string @param country.
-@param min -- an int corresponding to the smaller ip
-@param max -- an int corresponding to the larger ip
-'''
-class GeoIPNode(object):
-    def __init__(self, country, min, max):
-        self.min_ip = min
-        self.max_ip = max
-        self.country = country
+        for line in rules_str.split("\n"):
+            if line == '':
+                continue
+            elements = line.split(" ")
+            protocol = elements[1]
+            rule = None
+            if protocol == "dns":
+                #do dns things
+                rule = DNS_Rule()
+                rule.verdict = verdict
+                rule.dns_query = elements[2].split(".")
+            else:
+                rule = Rule(protocol)
+                rule.verdict = elements[0]
+                rule.set_ip_rule(elements[2])
+                rule.set_port_rule(elements[3])
 
-    def in_range(self, ip_int):
-        if ip_int < self.min_ip or ip_int > self.max_ip:
-            return False
-        return True
+            if protocol not in ret_dict:
+                ret_dict[protocol] = []
+
+            ret_dict[protocol].append(rule)
+
+        return ret_dict
+    class DNS_Rule(object):
+        def __init__(self):
+            self.verdict = None
+            self.dns_query = None
+
+    class Rule(object):
+        def __init__(self, protocol):
+            self.verdict = None
+            self.protocol = protocol
+            self.ext_port_case = None
+            self.ext_ip_case = None
+            self.port_rule = None
+            self.ip_rule = None
+            
+
+        def set_port_rule(self,ext_port_str):
+            if ext_port_str == "any":
+                    self.ext_port_case = 0
+            elif "-" in ext_port_str:
+                self.port_rule = [int(i) for i in ext_port_str.split("-")]
+                self.ext_port_case = 2
+            else:
+                self.port_rule = int(ext_port_str)
+                self.ext_port_case = 1
+
+        def set_ip_rule(self,ext_ip_str):
+            if ext_ip_str == "any":
+                    self.ext_ip_str = 0
+                elif "/" in ext_ip_str:
+                    self.ext_ip_case = 3
+                    elements = ext_ip_str.split("/")
+                    #turns "1.1.1.0/28" into [16843008,28]
+                    self.port_rule = [ip2int(elements[0]),int(elements[1])]
+                elif "." in ext_ip_str:
+                    self.ext_ip_case = 2
+                    self.port_rule = ip2int(ext_ip_str)
+                else:
+                    self.port_rule = ext_ip_str
+                    self.ext_ip_case = 1
+
+
+        def check_port(self, pkt_port):
+            #could be any
+            if self.ext_port_case == 0:
+                return True
+            elif self.ext_port_case == 1:
+                return (pkt_port == self.port_rule)
+            else:
+                return ((pkt_port >= self.port_rule[0]) and (pkt_port <= self.port_rule[1]))
+
+        #@should be receiving pkt_ip as integer
+        def check_ip(self, pkt_ip):
+            #could be any
+
+            if self.ext_ip_case == 0:
+                return True
+            elif self.ext_port_case == 1:
+                return self.ip_rule == self.get_country(pkt_ip)
+            elif self.ext_port_case == 2:
+                return self.ip_rule == pkt_ip
+            else:
+                ## figure out difference between 32 and second
+                difference = 32 - self.ip_rule[1]
+                ## bit shift both right that many
+                return ((pkt_ip >> difference) == (self.ip_rule >> difference))
+
+    '''
+    A GeoIPNode is an object holding the a two character string @param country.
+    @param min -- an int corresponding to the smaller ip
+    @param max -- an int corresponding to the larger ip
+    '''
+    class GeoIPNode(object):
+        def __init__(self, country, min, max):
+            self.min_ip = min
+            self.max_ip = max
+            self.country = country
+
+        def in_range(self, ip_int):
+            if ip_int < self.min_ip or ip_int > self.max_ip:
+                return False
+            return True
+
+    def ip2int(self, ip):
+        packedIP = socket.inet_aton(ip)
+        return struct.unpack("!I", packedIP)[0]
+
+    def get_country(self, ip):
+        return self.bst_geo_array(ip,0,len(self.geo_array)).country
+
+    def bst_geo_array(self, int_ip, min_index, max_index):
+        if min_index == (max_index - 1):
+            return self.geo_array[min_index]
+        total = min_index + max_index
+        mid = 0
+        if total % 2 != 0:
+            mid = total / 2 + 1
+        else:
+            mid = total / 2
+
+        g_node = self.geo_array[mid]
+        if g_node.min_ip > int_ip:
+            # go down
+            return self.bst_geo_array(int_ip, min_index, mid)
+        else:
+            return self.bst_geo_array(int_ip, mid, max_index)
+
 
 
 class Packet(object):
