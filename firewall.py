@@ -123,18 +123,22 @@ class Firewall:
                             packet.is_DNS = True
                     except Exception, e:
                         print e
-                    
-
             elif packet.protocol == "ICMP":
                 packet.icmp_type = self.get_icmp_type(pkt, start_trans_header)
-
             else:
                 self.send_pkt(pkt_dir, pkt)
 
         except Exception, e:
             print e , " 1"
             return 
-
+        print "Source IP: " + packet.src_ip + ", ",
+        print "Source port: " + packet.src_port + ", ", 
+        print "Destination IP: " + packet.dst_ip + ", ",
+        print "Destination Port: " + packet.dst_port + ", ",
+        print "Length: " + --length-- ", ",
+        print "Protocol: " + packet.protocol + ", "
+        if packet.is_DNS:
+            print "DNS Address: " + packet.dns_query + ", "
         return
 
     #sends packet to respected location
