@@ -138,7 +138,7 @@ class Firewall:
         print "Destination Port: " , packet.dst_port , ", ",
         print "Length: " ,"not yet", ", ",
         print "Protocol: " , packet.protocol , ", "
-	print "DNS" , packet.dns_query, ","
+	print "DNSL" , packet.dns_query, ","
         if packet.is_DNS:
             print "DNS Address: " , packet.dns_query , ", "
         return
