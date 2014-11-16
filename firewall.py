@@ -256,12 +256,12 @@ class FireWall_Rules(object):
 
         rule_list = rule_dictionary[pkt.protocol]
         verdict = "drop"
-        for rule in rule_list[]
+        for rule in rule_list:
             condition1 = False
             condition2 = False
-            if rule.check_port[ext_port]:
+            if rule.check_port(ext_port):
                 condition1 = True
-            if rule.check_ip = [ext_ip]:
+            if rule.check_ip(ext_ip):
                 condition2 = True
             if condition1 and condition2:
                 verdict = rule.verdict
@@ -292,7 +292,7 @@ class FireWall_Rules(object):
                 rule.verdict = verdict
                 rule.dns_query = elements[2].split(".")
             else:
-                rule = Rule(protocol)
+                rule = self.Rule(protocol)
                 rule.verdict = elements[0]
                 rule.set_ip_rule(elements[2])
                 rule.set_port_rule(elements[3])
@@ -330,18 +330,18 @@ class FireWall_Rules(object):
 
         def set_ip_rule(self,ext_ip_str):
             if ext_ip_str == "any":
-                    self.ext_ip_str = 0
-                elif "/" in ext_ip_str:
-                    self.ext_ip_case = 3
-                    elements = ext_ip_str.split("/")
-                    #turns "1.1.1.0/28" into [16843008,28]
-                    self.port_rule = [ip2int(elements[0]),int(elements[1])]
-                elif "." in ext_ip_str:
-                    self.ext_ip_case = 2
-                    self.port_rule = ip2int(ext_ip_str)
-                else:
-                    self.port_rule = ext_ip_str
-                    self.ext_ip_case = 1
+                self.ext_ip_str = 0
+            elif "/" in ext_ip_str:
+                self.ext_ip_case = 3
+                elements = ext_ip_str.split("/")
+                #turns "1.1.1.0/28" into [16843008,28]
+                self.port_rule = [self.ip2int(elements[0]),int(elements[1])]
+            elif "." in ext_ip_str:
+                self.ext_ip_case = 2
+                self.port_rule = self.ip2int(ext_ip_str)
+            else:
+                self.port_rule = ext_ip_str
+                self.ext_ip_case = 1
 
 
         def check_port(self, pkt_port):
