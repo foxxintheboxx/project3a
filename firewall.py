@@ -115,7 +115,7 @@ class Firewall:
                 ## UDP and the destination port is going to be 53
                 if pkt_dir == PKT_DIR_OUTGOING and packet.dst_port == 53:
                     packet.is_DNS = True
-                    packet.dns_query = self.parse_dns(pkt,  + 8)
+                    packet.dns_query = self.parse_dns(pkt, start_trans_header + 8)
 
             elif packet.protocol == "ICMP":
                 packet.icmp_type = self.get_icmp_type(pkt, start_trans_header)
@@ -139,53 +139,52 @@ class Firewall:
     #returns a big endian version of pkt
     def ip_header_length(self, pkt):
         byte0 = pkt[0]
-        unpacked_byte = struct.unpack("!B", byte0)
-        header_len = unpacked_byte & 0xF0
+        unpacked_byte = struct.unpack("!B", byte0)[0]
+        header_len = unpacked_byte & 0x0F
         return header_len
 
     def total_length(self, pkt):
         total_byte = pkt[2:4]
-        unpacked_byte = struct.unpack("!H", total_byte)
+        unpacked_byte = struct.unpack("!H", total_byte)[0]
         return unpacked_byte
 
     def udp_length(self, pkt, offset):
         length_byte = pkt[(offset + 4): (offset + 6)]
-        unpacked_byte = struct.unpack("!H", length_byte)
+        unpacked_byte = struct.unpack("!H", length_byte)[0]
         return unpacked_byte
 
     def get_src_port_std(self, pkt, offset):
         dst_bytes = pkt[offset: offset + 2]
-        unpacked_byte = struct.unpack("!H", dst_bytes)
+        unpacked_byte = struct.unpack("!H", dst_bytes)[0]
         return unpacked_byte
 
     def get_dst_port_std(self, pkt, offset):
         dst_bytes = pkt[offset + 2: offset + 4]
-        unpacked_byte = struct.unpack("!H", dst_bytes)
+        unpacked_byte = struct.unpack("!H", dst_bytes)[0]
         return unpacked_byte
 
     #get icmp type -- firsty byte of icmp header
     def get_icmp_type(self, pkt, offset):
         type_byte = pkt[offset]
-        unpacked_byte = struct.unpack("!B", type_byte)
-        icmp_type = unpacked_byte & 0x0F #****
+        unpacked_byte = struct.unpack("!B", type_byte)[0]
+        icmp_type = unpacked_byte
         return icmp_type
-
 
     #return the decimal protocol from pkt
     def get_protocol(self, pkt):
         proto_byte = pkt[9]
-        unpacked_byte = struct.unpack("!B", proto_byte)
+        unpacked_byte = struct.unpack("!B", proto_byte)[0]
         return unpacked_byte
 
     def get_src(self, pkt):
         address_byte = pkt[12:16]
-        unpacked_byte = struct.unpack("!HH", address_byte)
+        unpacked_byte = struct.unpack("!HH", address_byte)[0]
         return unpacked_byte
 
 
     def get_dst(self, pkt):
         address_byte = pkt[16:20]
-        unpacked_byte = struct.unpack("!HH", address_byte)
+        unpacked_byte = struct.unpack("!HH", address_byte)[0]
         return unpacked_byte
 
     #@packet is the data structure for a packet with our necessary contents
@@ -266,7 +265,7 @@ class Firewall:
             #go up
 
     def parse_dns(self, pkt, offset):
-
+        dns_hea
 
 
 '''
