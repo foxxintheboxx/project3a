@@ -6,9 +6,20 @@ from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 # TODO: Feel free to import any Python standard moduless as necessary.
 # (http://docs.python.org/2/library/)
 # You must NOT use any 3rd-party libraries, though.
+#QD count == 1, QClass == 1, QTYPE == 1 (IPV4) QTYPE == 28 (IPV6) ,
+#test dns throught
+
+#1.1.1.1/0 is any
+#ns -u send as udp
+#empty rule --
+# qnames  any where the asterick by itself 
+# ipdb with just one entry and empty
+# specific country
+# 
+# Ask about dropping dns malformed packets
 
 class Firewall:
-    def __init__(self, config = None, iface_int, iface_ext):
+    def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
         self.geo_array = []
@@ -28,6 +39,8 @@ class Firewall:
                 if (len(elements) == 3):
                     g_node = GeoIPNode(elements[2], self.ip2int(elements[0]), self.ip2int(elements[1]))
                     self.geo_array.append(g_node)
+
+
 
 
         with open(config['rule']) as file:
@@ -77,8 +90,156 @@ class Firewall:
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
-        print repr(pkt) 
-        pass
+        packet = Packet()
+        try:
+            header_len = self.ip_header_length(pkt)
+            if header_len < 5:
+                return
+            proto_dec = self.get_protocol(pkt)
+            packet.set_protocol(proto_dec)
+            src = self.get_src(pkt)
+            dst = self.get_dst(pkt)
+
+            packet.src_ip = src
+            packet.dest_ip = dst
+
+            start_trans_header = header_len * 4
+
+            if packet.protocol == "TCP":
+                packet.src_port = self.get_src_port_std(pkt, start_trans_header)
+                packet.dst_port = self.get_dst_port_std(pkt, start_trans_header)
+
+            elif packet.protocol == "UDP":
+                packet.src_port = self.get_src_port_std(pkt, start_trans_header)
+                packet.dst_port = self.get_dst_port_std(pkt, start_trans_header)
+                ## UDP and the destination port is going to be 53
+                if pkt_dir == PKT_DIR_OUTGOING and packet.dst_port == 53:
+                    packet.is_DNS = True
+                    packet.dns_query = self.parse_dns(pkt,  + 8)
+
+            elif packet.protocol == "ICMP":
+                packet.icmp_type = self.get_icmp_type(pkt, start_trans_header)
+
+            else:
+                self.send_pkt(pkt_dir, pkt)
+
+        except:
+            print "fuck me"
+            return 
+
+        return
+
+    #sends packet to respected location
+    def send_pkt(self, pkt_dir, pkt):
+        if pkt_dir == PKT_DIR_INCOMING:
+            self.iface_int.send_ip_packet(pkt)
+        elif pkt_dir == PKT_DIR_OUTGOING:
+            self.iface_ext.send_ip_packet(pkt)
+
+    #returns a big endian version of pkt
+    def ip_header_length(self, pkt):
+        byte0 = pkt[0]
+        unpacked_byte = struct.unpack("!B", byte0)
+        header_len = unpacked_byte & 0xF0
+        return header_len
+
+    def total_length(self, pkt):
+        total_byte = pkt[2:4]
+        unpacked_byte = struct.unpack("!H", total_byte)
+        return unpacked_byte
+
+    def udp_length(self, pkt, offset):
+        length_byte = pkt[(offset + 4): (offset + 6)]
+        unpacked_byte = struct.unpack("!H", length_byte)
+        return unpacked_byte
+
+    def get_src_port_std(self, pkt, offset):
+        dst_bytes = pkt[offset: offset + 2]
+        unpacked_byte = struct.unpack("!H", dst_bytes)
+        return unpacked_byte
+
+    def get_dst_port_std(self, pkt, offset):
+        dst_bytes = pkt[offset + 2: offset + 4]
+        unpacked_byte = struct.unpack("!H", dst_bytes)
+        return unpacked_byte
+
+    #get icmp type -- firsty byte of icmp header
+    def get_icmp_type(self, pkt, offset):
+        type_byte = pkt[offset]
+        unpacked_byte = struct.unpack("!B", type_byte)
+        icmp_type = unpacked_byte & 0x0F #****
+        return icmp_type
+
+
+    #return the decimal protocol from pkt
+    def get_protocol(self, pkt):
+        proto_byte = pkt[9]
+        unpacked_byte = struct.unpack("!B", proto_byte)
+        return unpacked_byte
+
+    def get_src(self, pkt):
+        address_byte = pkt[12:16]
+        unpacked_byte = struct.unpack("!HH", address_byte)
+        return unpacked_byte
+
+
+    def get_dst(self, pkt):
+        address_byte = pkt[16:20]
+        unpacked_byte = struct.unpack("!HH", address_byte)
+        return unpacked_byte
+
+    #@packet is the data structure for a packet with our necessary contents
+    #@return either true or false for whether the packet passed our rule check
+    #packet.protocol should be either udp,tcp,icmp
+    # packet.Port should be against "any", a single port(int), or a range tuple([2000-3000])
+    # packetIp should be checking against "any", a single IP(1.1.1.1), a 2 string country("AU"), an IP prefix tuple(["1.1.1.0",18])
+    def rule_check(self, packet):
+        protocol = packet.protocol
+        port = packet.port
+        ip = packet.dst_port
+        dns_query = packet.dns_query
+        verdict = None
+
+        country = self.get_country(packet.dst_port)
+
+        #do run through of dictionary based rules
+            #for each rule
+                #do comparisons against the IP and Port of the rule
+                #find out which type of IP rule to use based on what rule[1]
+                    #check to see if there is a match
+                #find out which type of 
+        #if dns, then additionally do DNS rule checks second
+
+        if  packet.is_DNS:
+            #do dns things
+            pass
+        else:
+            country = self.get_country(ip)
+            condition1 = False
+            condition2 = False
+            #need to go through the dictionary and check to see what the most recent match is
+            for rule in self.rule_dict[protocol]:
+                rule_ip = rule[1]
+                if rule_ip == 'any':
+                    condition1 = True
+                elif type(rule_ip) is str:
+                    if rule_ip == ip:
+                        condition1 = True
+                else:
+                    condition1 = False
+                rule_port = rule[2]
+                if rule_port == 'any':
+                    condition2 = True
+                # elif :
+                else:
+                    condition2 = False
+                if condition1 and condition2
+                    verdict = rule_ip[0]
+
+        if verdict == "pass":
+            return True
+        else:
+            return False
 
     #return int
     def ip2int(self, ip):
@@ -104,6 +265,8 @@ class Firewall:
             return self.bst_geo_array(int_ip, mid, max_index)
             #go up
 
+    def parse_dns(self, pkt, offset):
+
 
 
 '''
@@ -122,6 +285,32 @@ class GeoIPNode(object):
             return False
         return True
 
+
+class Packet(object):
+    def __init__(self):
+        self.src_ip = None
+        self.dest_ip = None
+        self.src_port = None
+        self.dst_port = None
+        self.dir = None
+        self.is_DNS = False
+        self.protocol = "unknown"
+        self.icmp_type = None
+        self.dns_query = None
+
+    def set_protocol(decimal_value):
+        if decimal_value == 17:
+            self.protocol = "UDP"
+        elif decimal_value == 1:
+            self.protocol = "ICMP"
+        elif decimal_value == 6:
+            self.protocol = "TCP"
+
+    def set_src_port(decimal_value):
+        self.src_port = decimal_value
+
+    def set_dst_port(decimal_value):
+        self.dst_port = decimal_value
 
 
 
