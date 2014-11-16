@@ -35,7 +35,19 @@ class Firewall:
 
 
         # TODO: Load the GeoIP DB ('geoipdb.txt') as well
-        packet_test = Packet
+        direction = PKT_DIR_INCOMING
+        #test general functionality for TCP/UDP
+        # packet_test1 = Packet()
+        # packet_test1.protocol = "tcp"
+        # packet_test1.src_port = 1234
+        # packet_test1.src_ip = 1234
+        # #test ip check
+        # packet_test2 = Packet()
+        # packet_test2.protocol = "tcp"
+        # packet_test2.src_port = 1234
+        # packet_test2.src_ip = 1234
+        # packet_test3 = Packet()
+        # packet_test4 = Packet()
 
 
 
@@ -385,9 +397,7 @@ class FireWall_Rules(object):
                 return False
             return True
 
-    def ip2int(self, ip):
-        packedIP = socket.inet_aton(ip)
-        return struct.unpack("!I", packedIP)[0]
+
 
     def get_country(self, ip):
         return self.bst_geo_array(ip,0,len(self.geo_array)).country
@@ -437,5 +447,7 @@ class Packet(object):
     def set_dst_port(self, decimal_value):
         self.dst_port = decimal_value
 
-
+def ip2int(self, ip):
+    packedIP = socket.inet_aton(ip)
+    return struct.unpack("!I", packedIP)[0]
 
