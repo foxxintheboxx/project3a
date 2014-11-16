@@ -131,14 +131,14 @@ class Firewall:
         except Exception, e:
             print e , " 1"
             return 
-        print "Source IP: " + packet.src_ip + ", ",
-        print "Source port: " + packet.src_port + ", ", 
-        print "Destination IP: " + packet.dst_ip + ", ",
-        print "Destination Port: " + packet.dst_port + ", ",
-        print "Length: " + --length-- ", ",
-        print "Protocol: " + packet.protocol + ", "
+        print "Source IP: " , packet.src_ip , ", ",
+        print "Source port: " , packet.src_port , ", ", 
+        print "Destination IP: " , packet.dest_ip , ", ",
+        print "Destination Port: " , packet.dst_port , ", ",
+        print "Length: " ,"not yet", ", ",
+        print "Protocol: " , packet.protocol , ", "
         if packet.is_DNS:
-            print "DNS Address: " + packet.dns_query + ", "
+            print "DNS Address: " , packet.dns_query , ", "
         return
 
     #sends packet to respected location
@@ -190,13 +190,13 @@ class Firewall:
 
     def get_src(self, pkt):
         address_byte = pkt[12:16]
-        unpacked_byte = struct.unpack("!HH", address_byte)[0]
+        unpacked_byte = struct.unpack("!I", address_byte)[0]
         return unpacked_byte
 
 
     def get_dst(self, pkt):
         address_byte = pkt[16:20]
-        unpacked_byte = struct.unpack("!HH", address_byte)[0]
+        unpacked_byte = struct.unpack("!I", address_byte)[0]
         return unpacked_byte
 
     #@packet is the data structure for a packet with our necessary contents
