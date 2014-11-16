@@ -92,6 +92,7 @@ class Firewall:
         # TODO: Your main firewall code will be here.
         packet = Packet()
         try:
+            print("handling")
             header_len = self.ip_header_length(pkt)
             if header_len < 5:
                 return
@@ -131,7 +132,7 @@ class Firewall:
                 self.send_pkt(pkt_dir, pkt)
 
         except Exception, e:
-            print "fuck me"
+            print e , " 1"
             return 
 
         return
@@ -333,7 +334,7 @@ class Packet(object):
         self.icmp_type = None
         self.dns_query = None
 
-    def set_protocol(decimal_value):
+    def set_protocol(self,decimal_value):
         if decimal_value == 17:
             self.protocol = "UDP"
         elif decimal_value == 1:
@@ -341,10 +342,10 @@ class Packet(object):
         elif decimal_value == 6:
             self.protocol = "TCP"
 
-    def set_src_port(decimal_value):
+    def set_src_port(self, decimal_value):
         self.src_port = decimal_value
 
-    def set_dst_port(decimal_value):
+    def set_dst_port(self, decimal_value):
         self.dst_port = decimal_value
 
 
