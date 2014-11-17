@@ -24,20 +24,12 @@ class Firewall:
         fw_rules = FireWall_Rules(rule_content,geoipdb_content)
 
         self.fw_rules = fw_rules
-        # TODO: Load the firewall rules (from rule_filename) here.
-        # print 'I am supposed to load rules from %s, but I am feeling lazy.' % \
-        #         config['rule']
-        
-
-
-
 
     # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
         packet = Packet()
-        print("handling")
         header_len = self.ip_header_length(pkt)
         if header_len < 5:
             return
@@ -61,7 +53,6 @@ class Firewall:
                 packet.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
             except:
-                print "fail tcp port access"
                 return
 
         elif packet.protocol == "udp":
@@ -70,43 +61,28 @@ class Firewall:
                 packet.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
             ## UDP and the destination port is going to be 53
             except:
-                print "fail UDP port access"
                 return
             if pkt_dir == PKT_DIR_OUTGOING and packet.dst_port == 53:
                 try:
-                    print "valid"
                     result = self.parse_dns(pkt, start_trans_header + 8)
                     if result != None:
-                        print "result"
-                        print result
                         packet.dns_query = result
                         packet.is_DNS = True
                 except Exception, e:
-                    print "failed DNS Parse"
-                    print e
+                    return
         elif packet.protocol == "icmp":
             try:
                 packet.icmp_type = self.get_icmp_type(pkt, start_trans_header)
             except:
-                print "failed icmp parse"
                 return
         else:
             self.send_pkt(pkt_dir, pkt)
             return
-        print packet.dst_port, packet.src_port, packet.is_DNS
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
         if verdict == "pass":
             self.send_pkt(pkt_dir, pkt)
 
-        print "Source IP: " , packet.src_ip , ", ",
-        print "Source port: " , packet.src_port , ", ", 
-        print "Destination IP: " , packet.dest_ip , ", ",
-        print "Destination Port: " , packet.dst_port , ", ",
-        print "Length: " ,"not yet", ", ",
-        print "Protocol: " , packet.protocol , ", "
-        print "DNS" , packet.dns_query, ","
-        if packet.is_DNS:
-           print "DNS Address: " , packet.dns_query , ", "
+
         return
 
     #sends packet to respected location
@@ -245,10 +221,7 @@ class FireWall_Rules(object):
         for key, rules in self.rule_dictionary.iteritems():
             for rule in rules:
                 rule.parent = self
-                if rule.protocol == "dns":
-                    print rule.verdict, rule.protocol, rule.dns_query
-                else:
-                    print rule.verdict, rule.protocol, rule.ip_rule, rule.port_rule 
+ 
         self.geo_array = []
 
         for line in geoipdb_str.split("\n"):
@@ -402,8 +375,7 @@ class FireWall_Rules(object):
 
         #@should be receiving pkt_ip as integer
         def check_ip(self, pkt_ip):
-            #could be any
-           # print self.ip_rule, self.protocol , self.port_rule, self.ext_ip_case,
+
             if self.ext_ip_case == 0:
                 return True
             elif self.ext_ip_case == 1:
