@@ -10,6 +10,7 @@ def ip2int(ip):
         packedIP = socket.inet_aton(ip)
         return struct.unpack("!I", packedIP)[0]
     except Exception, e:
+        print e
         return None
 class Firewall:
     def __init__(self, config, iface_int, iface_ext):
@@ -42,9 +43,11 @@ class Firewall:
         packet.set_protocol(proto_dec)
         src = dst = None
         try:
-            src = ip2int(self.get_src(pkt))
-            dst = ip2int(self.get_dst(pkt))
+            print "here"
+            src = self.get_src(pkt)
+            dst = self.get_dst(pkt)
         except:
+            print "failed 1"
             return
         if src == None or dst == None:
             return
@@ -53,7 +56,7 @@ class Firewall:
 
         start_trans_header = header_len * 4
 
-        if packet.protocol == "TCP":
+        if packet.protocol == "tcp":
             try:
                 packet.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
@@ -61,10 +64,12 @@ class Firewall:
                 print "fail tcp port access"
                 return
 
-        elif packet.protocol == "UDP":
+        elif packet.protocol == "udp":
             try:
-                packet.src_port = int(self.get_src_port_std(pkt, start_trans_header))
-                packet.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
+                packet.src_port = self.get_src_port_std(pkt, start_trans_header)
+                packet.dst_port = self.get_dst_port_std(pkt, start_trans_header)
+                print packet.dst_port
+
             ## UDP and the destination port is going to be 53
             except:
                 print "fail UDP port access"
@@ -78,7 +83,7 @@ class Firewall:
                 except Exception, e:
                     print "failed DNS Parse"
                     print e
-        elif packet.protocol == "ICMP":
+        elif packet.protocol == "icmp":
             try:
                 packet.icmp_type = self.get_icmp_type(pkt, start_trans_header)
             except:
@@ -88,6 +93,7 @@ class Firewall:
             self.send_pkt(pkt_dir, pkt)
             return
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
+	print verdict
         if verdict == "pass":
             self.send_pkt(pkt_dir, pkt)
 
