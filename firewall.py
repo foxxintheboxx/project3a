@@ -97,15 +97,15 @@ class Firewall:
         if verdict == "pass":
             self.send_pkt(pkt_dir, pkt)
 
-        # print "Source IP: " , packet.src_ip , ", ",
-        # print "Source port: " , packet.src_port , ", ", 
-        # print "Destination IP: " , packet.dest_ip , ", ",
-        # print "Destination Port: " , packet.dst_port , ", ",
-        # print "Length: " ,"not yet", ", ",
-        # print "Protocol: " , packet.protocol , ", "
-        # print "DNS" , packet.dns_query, ","
-        # if packet.is_DNS:
-        #     print "DNS Address: " , packet.dns_query , ", "
+        print "Source IP: " , packet.src_ip , ", ",
+        print "Source port: " , packet.src_port , ", ", 
+        print "Destination IP: " , packet.dest_ip , ", ",
+        print "Destination Port: " , packet.dst_port , ", ",
+        print "Length: " ,"not yet", ", ",
+        print "Protocol: " , packet.protocol , ", "
+        print "DNS" , packet.dns_query, ","
+        if packet.is_DNS:
+            print "DNS Address: " , packet.dns_query , ", "
         return
 
     #sends packet to respected location
@@ -195,9 +195,9 @@ class Firewall:
         qd_count_byte = dns_header[4:6]
         qd_count = struct.unpack("!H", qd_count_byte)[0]
         if qd_count != 1:
+            
             return None
         offset = offset + 12
-
         question = pkt[offset:]
         qname_end = 0
         byte_val = struct.unpack("!B", question[qname_end])[0]
@@ -214,19 +214,21 @@ class Firewall:
 
             q_name.append(string)
             byte_val = struct.unpack("!B", question[qname_end])[0]
-
-        q_type_byte = question[qname_end : qname_end + 2]
-        q_class_byte = question[qname_end + 2: qname_end + 4]
+        q_type_byte = question[qname_end + 1 : qname_end + 3]
+        q_class_byte = question[qname_end + 3: qname_end + 5]
 
         q_type = struct.unpack("!H", q_type_byte)[0]
         q_class = struct.unpack("!H", q_class_byte)[0]
 
-        if q_type != 28 or q_type != 1:
+        if q_type != 28 and q_type != 1:
+            print "FAIL 1"
+            print q_type
             return None
 
         if q_class != 1:
+            print "FAIL 2"
             return None
-
+        print "returning parsed dns"
         return q_name
 
 
