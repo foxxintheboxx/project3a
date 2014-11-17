@@ -11,6 +11,7 @@ def ip2int(ip):
         packedIP = socket.inet_aton(ip)
         return struct.unpack("!I", packedIP)[0]
     except Exception, e:
+        return None
 class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
@@ -36,7 +37,7 @@ class Firewall:
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
         packet = Packet()
-        #print("handling")
+        print("handling")
         header_len = self.ip_header_length(pkt)
         if header_len < 5:
             return
@@ -44,8 +45,8 @@ class Firewall:
         packet.set_protocol(proto_dec)
         src = dst = None
         try:
-            src = ip2int(self.get_src(pkt))
-            dst = ip2int(self.get_dst(pkt))
+            src = self.get_src(pkt)
+            dst = self.get_dst(pkt)
         except:
             return
         if src == None or dst == None:
@@ -54,8 +55,8 @@ class Firewall:
         packet.dest_ip = dst
 
         start_trans_header = header_len * 4
-
-        if packet.protocol == "TCP":
+        
+        if packet.protocol == "tcp":
             try:
                 packet.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
@@ -63,7 +64,7 @@ class Firewall:
                 print "fail tcp port access"
                 return
 
-        elif packet.protocol == "UDP":
+        elif packet.protocol == "udp":
             try:
                 packet.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
@@ -73,14 +74,17 @@ class Firewall:
                 return
             if pkt_dir == PKT_DIR_OUTGOING and packet.dst_port == 53:
                 try:
+                    print "valid"
                     result = self.parse_dns(pkt, start_trans_header + 8)
                     if result != None:
+                        print "result"
+                        print result
                         packet.dns_query = result
                         packet.is_DNS = True
                 except Exception, e:
                     print "failed DNS Parse"
                     print e
-        elif packet.protocol == "ICMP":
+        elif packet.protocol == "icmp":
             try:
                 packet.icmp_type = self.get_icmp_type(pkt, start_trans_header)
             except:
@@ -89,19 +93,20 @@ class Firewall:
         else:
             self.send_pkt(pkt_dir, pkt)
             return
+        print packet.dst_port, packet.src_port, packet.is_DNS
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
         if verdict == "pass":
             self.send_pkt(pkt_dir, pkt)
 
-        # print "Source IP: " , packet.src_ip , ", ",
-        # print "Source port: " , packet.src_port , ", ", 
-        # print "Destination IP: " , packet.dest_ip , ", ",
-        # print "Destination Port: " , packet.dst_port , ", ",
-        # print "Length: " ,"not yet", ", ",
-        # print "Protocol: " , packet.protocol , ", "
-        # print "DNS" , packet.dns_query, ","
-        # if packet.is_DNS:
-        #     print "DNS Address: " , packet.dns_query , ", "
+        print "Source IP: " , packet.src_ip , ", ",
+        print "Source port: " , packet.src_port , ", ", 
+        print "Destination IP: " , packet.dest_ip , ", ",
+        print "Destination Port: " , packet.dst_port , ", ",
+        print "Length: " ,"not yet", ", ",
+        print "Protocol: " , packet.protocol , ", "
+        print "DNS" , packet.dns_query, ","
+        if packet.is_DNS:
+           print "DNS Address: " , packet.dns_query , ", "
         return
 
     #sends packet to respected location
@@ -212,13 +217,13 @@ class Firewall:
             q_name.append(string)
             byte_val = struct.unpack("!B", question[qname_end])[0]
 
-        q_type_byte = question[qname_end : qname_end + 2]
-        q_class_byte = question[qname_end + 2: qname_end + 4]
+        q_type_byte = question[qname_end + 1 : qname_end + 3]
+        q_class_byte = question[qname_end + 3: qname_end + 5]
 
         q_type = struct.unpack("!H", q_type_byte)[0]
         q_class = struct.unpack("!H", q_class_byte)[0]
 
-        if q_type != 28 or q_type != 1:
+        if q_type != 28 and q_type != 1:
             return None
 
         if q_class != 1:
@@ -252,11 +257,6 @@ class FireWall_Rules(object):
                 g_node = self.GeoIPNode(elements[2], ip2int(elements[0]), ip2int(elements[1]))
                 self.geo_array.append(g_node)
 
-    def test(self, ip, country):
-        if self.get_country(ip2int("jkhgdfjksghd")) == country:
-            print "yee"
-        else:
-            print "nay"
     #@pkt Packet class object
     #@dir either PKT_DIR_INCOMING, PKT_DIR_OUTGOING
     #@return True or False
@@ -276,7 +276,7 @@ class FireWall_Rules(object):
         if pkt.protocol == "icmp":
             ext_port = pkt.type
         if pkt.protocol not in self.rule_dictionary:
-            return verdict
+            return "pass"
         rule_list = self.rule_dictionary[pkt.protocol]
 
         for rule in rule_list:
@@ -290,7 +290,7 @@ class FireWall_Rules(object):
                 if condition1 and condition2:
                     verdict = rule.verdict
             else: #rule is a DNS_rule
-                if rule.check_dns_query(pkt.dns_query):
+                if pkt.is_DNS and rule.check_dns_query(pkt.dns_query):
                     verdict = rule.verdict
 
         return verdict
@@ -407,7 +407,10 @@ class FireWall_Rules(object):
             if self.ext_ip_case == 0:
                 return True
             elif self.ext_ip_case == 1:
-                return self.ip_rule.lower() == res
+                response = self.parent.get_country(pkt_ip)
+                if response == None:
+                   return False
+                return self.ip_rule.lower() == response.lower()
             elif self.ext_ip_case == 2:
                 return self.ip_rule == pkt_ip
             else:
