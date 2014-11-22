@@ -3,8 +3,18 @@ from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 class Packet_Service(object):
 
 
-	def packet_to_data(self, pkt):
-		return None
+	def packet_to_data(self, packet):
+		total_pkt = ""
+		total_pkt = self.craft_ip(packet)
+		proto = packet.protocol
+		if proto == "TCP":
+			total_pkt += self.craft_tcp(packet)
+		elif proto == "UDP":
+			total_pkt +=  self.craft_udp(packet)
+			if packet.is_DNS == False:
+				print "BAD RECONTSTRUCT"
+			total_pkt += self.craft_dns(packet)
+		return total_pkt
 
 	def data_to_packet(self, pkt, pkt_dir):
 		packet = Packet()
@@ -65,6 +75,21 @@ class Packet_Service(object):
         unpacked_byte = struct.unpack("!B", byte0)[0]
         header_len = unpacked_byte & 0x0F
         return header_len
+
+    def ttl(self, pkt):
+    	ttl_byte = pkt[8]
+    	unpacked_byte = struct.unpack("!B", ttl_byte)[0]
+    	return unpacked_byte
+
+    # def frag_offset(self, pkt):
+    # 	byte = pkt[6:8]
+    # 	unpacked_byte = struct.unpack("!H", fr)
+
+    def version(self, pkt):
+        byte0 = pkt[0]
+        unpacked_byte = struct.unpack("!B", byte0)[0]
+        version = unpacked_byte & 0xF0
+        return version
 
     def total_length(self, pkt):
         total_byte = pkt[2:4]
@@ -149,3 +174,5 @@ class Packet_Service(object):
         return q_name
 
 #MARK CONSTRUCTING
+
+

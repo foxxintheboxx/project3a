@@ -27,7 +27,9 @@ class Firewall:
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
         if verdict == "pass":
             self.send_pkt(pkt_dir, pkt)
-
+        elif verdict == "deny":
+            rst_pkt = self.packet_service.packet_to_data(packet)
+            self.send_pkt(pkt_dir, rst_pkt)
         return
 
     #sends packet to respected location
