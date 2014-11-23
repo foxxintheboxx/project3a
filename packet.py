@@ -16,12 +16,9 @@ class Packet(object):
         self.src_port = None
         self.dst_port = None
         self.seq_num = None #TCP
-        self.ack_num = None #TCP
         self.trans_length = None 
-        self.reserved = None #TCP
-        self.tcp_flags = None #TCP
         self.checksum = None
-        self.window = None #TCP
+        self.window = 1 #TCP
         self.urg_pointer = None #TCP
 
 
@@ -29,7 +26,6 @@ class Packet(object):
         self.dns_query = None
         self.is_DNS = False
         self.protocol = "unknown"
-
 
         self.dir = None
 

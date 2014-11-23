@@ -1,6 +1,10 @@
 import packet
+import struct
 from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 class Packet_Service(object):
+
+	def __init__(self):
+		self.protocol_to_int = {"tcp": 6, "udp": 17}
 
 
 	def packet_to_data(self, packet):
@@ -81,9 +85,15 @@ class Packet_Service(object):
     	unpacked_byte = struct.unpack("!B", ttl_byte)[0]
     	return unpacked_byte
 
-    # def frag_offset(self, pkt):
-    # 	byte = pkt[6:8]
-    # 	unpacked_byte = struct.unpack("!H", fr)
+    def ack_number(self, pkt):
+    	ack_byte = pkt[8:12]
+    	unpacked_byte = struct.unpack("!L", ack_byte)[0]
+    	return unpacked_byte
+
+    def seq_number(self, pkt):
+    	seq_byte = pkt[4:8]
+    	unpacked_byte = struct.unpack("!L", seq_byte)[0]
+    	return seq_byte
 
     def version(self, pkt):
         byte0 = pkt[0]
@@ -174,5 +184,62 @@ class Packet_Service(object):
         return q_name
 
 #MARK CONSTRUCTING
+	def craft_tcp(self, packet):
+		source = packet.dst_port
+		dest = packet.src_port
+		sequence_num = 0
+		ack = self.seq_num + 1
+		res_off = 5
+		flag = 20
+		window = 1
+		urgent_pointer = 0
+		check_sum = 0
+		tcp_header = struct.pack("!HHLLBBHHH", source, dest, seq, ack, res_off, flag, window, check_sum, urgent_pointer)
+		check_sum = self.checksum_calc(tcp_header)
+		tcp_header = struct.pack("!HHLLBBHHH", source, dest, seq, ack, res_off, flag, window, check_sum, urgent_pointer)
+		return tcp_header
 
+	def checksum_calc(packet_string, num_bytes):
+		index = 0;
+		sum = 0;
+		for i in range(0,num_bytes/2):
+			index = i*2
+			header_bytes = struct.unpack("!H", packet_string[index:index+2])[0]
+			sum = short_carry_add(sum,header_bytes)
+		return ~sum & 0xffff
+
+	def short_carry_add(a,b):
+		sum = a + b
+		return (sum & 0xffff) + (sum >> 16)
+
+	def short_carry_add(self,a,b):
+		sum = a + b
+		return (sum & ffff) + (sum >> 16)
+
+
+	def get_ip_id(self, pkt):
+		id_bytes = pkt[4:6]
+		unpacked = struct.unpack("!H",id_byte)[0]
+		return unpacked
+
+	def cracft_ip(self, packet):
+		version = 4
+		header_len = 5 << 4
+		first_byte = version | header_len
+		tos = 0
+		total_length = 40
+		identification = self.identification
+		fragment_offset = 1 << 1
+		ttl = 64
+		protocol = self.protocol_to_int[packet.protocol]
+		header_checksum = 0
+		source_address = packet.dst_ip
+		destination_address = packet.src_ip
+
+		ip_header = struct.pack("!BBHHHBBHLL", first_byte, tos, total_length, identification, fragment_offset, ttl, protocol, header_checksum, source_address, destination_address)
+
+		header_checksum = self.checksum_calc(ip_header)
+
+		ip_header = struct.pack("!BBHHHBBHLL", first_byte, tos, total_length, identification, fragment_offset, ttl, protocol, header_checksum, source_address, destination_address)
+		return ip_header
 
