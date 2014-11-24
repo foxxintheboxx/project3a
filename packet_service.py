@@ -231,7 +231,7 @@ class Packet_Service(object):
         sum = a + b
         return (sum & 0xffff) + (sum >> 16)
 
-    def craft_ip(self, packet, pkt_dir):
+    def craft_ip(self, packet):
         version = 4 << 4
         header_len = 5
         first_byte = version | header_len
