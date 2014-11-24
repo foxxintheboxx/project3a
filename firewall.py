@@ -11,11 +11,11 @@ class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
-        self.packet_service = Packet_Service() #parse and constructing
+        self.packet_service = packet_service.Packet_Service() #parse and constructing
 
         with open(config['rule']) as file:
             rule_content = file.read()
-        fw_rules = FireWall_Rules(rule_content)
+        fw_rules = firewall_rules.FireWall_Rules(rule_content)
 
         self.fw_rules = fw_rules
 

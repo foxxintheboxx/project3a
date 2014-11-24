@@ -21,7 +21,7 @@ class Packet_Service(object):
         return total_pkt
 
     def data_to_packet(self, pkt, pkt_dir):
-        packet = Packet()
+        packet = packet.Packet()
         header_len = self.ip_header_length(pkt)
         packet.dir = pkt_dir
         if header_len < 5:
