@@ -30,7 +30,7 @@ class Firewall:
         elif verdict == "deny":
             rst_pkt = self.packet_service.packet_to_data(packet)
             packet = self.packet_service.data_to_packet(pkt, pkt_dir)
-            print repr(rst_pkt)
+            print rep(rst_pkt)
             self.iface_ext.send_ip_packet(rst_pkt)
         else:
             self.send_pkt(pkt_dir, pkt)

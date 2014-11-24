@@ -1,4 +1,3 @@
-from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 class FireWall_Rules(object):
 
     def __init__(self, rules_str):

@@ -210,7 +210,9 @@ class Packet_Service(object):
         sum = a + b
         return (sum & 0xffff) + (sum >> 16)
 
-
+    def short_carry_add(self,a,b):
+        sum = a + b
+        return (sum & ffff) + (sum >> 16)
 
 
     def get_ip_id(self, pkt):
