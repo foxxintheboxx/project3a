@@ -21,15 +21,15 @@ class Packet_Service(object):
         return total_pkt
 
     def data_to_packet(self, pkt, pkt_dir):
-        packet = packet.Packet()
+        packet0 = packet.Packet()
         header_len = self.ip_header_length(pkt)
-        packet.dir = pkt_dir
+        packet0.dir = pkt_dir
         if header_len < 5:
             return None
-        packet.total_length = self.total_length(pkt)
-        packet.ip_id = self.get_ip_id(pkt)
+        packet0.total_length = self.total_length(pkt)
+        packet0.ip_id = self.get_ip_id(pkt)
         proto_dec = self.get_protocol(pkt)
-        packet.set_protocol(proto_dec)
+        packet0.set_protocol(proto_dec)
         src = dst = None
         try:
             src = self.get_src(pkt)
@@ -38,42 +38,42 @@ class Packet_Service(object):
             return
         if src == None or dst == None:
             return None
-        packet.src_ip = src
-        packet.dest_ip = dst
+        packet0.src_ip = src
+        packet0.dest_ip = dst
 
         start_trans_header = header_len * 4
         
-        if packet.protocol == "tcp":
+        if packet0.protocol == "tcp":
             try:
-                packet.src_port = int(self.get_src_port_std(pkt, start_trans_header))
-                packet.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
-                packet.seq_num = self.seq_number(pkt)
+                packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
+                packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
+                packet0.seq_num = self.seq_number(pkt)
             except:
                 return None
 
-        elif packet.protocol == "udp":
+        elif packet0.protocol == "udp":
             try:
-                packet.src_port = int(self.get_src_port_std(pkt, start_trans_header))
-                packet.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
+                packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
+                packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
             except:
                 return None
-            if pkt_dir == PKT_DIR_OUTGOING and packet.dst_port == 53:
+            if pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 53:
                 try:
                     result = self.parse_dns(pkt, start_trans_header + 8)
                     if result != None:
-                        packet.dns_query = result
-                        packet.is_DNS = True
+                        packet0.dns_query = result
+                        packet0.is_DNS = True
                 except:
                     return None
-        elif packet.protocol == "icmp":
+        elif packet0.protocol == "icmp":
             try:
-                packet.icmp_type = self.get_icmp_type(pkt, start_trans_header)
+                packet0.icmp_type = self.get_icmp_type(pkt, start_trans_header)
             except:
                 return
         else:
             return None
 
-        return packet
+        return packet0
 
 
 #MARK PARSING
