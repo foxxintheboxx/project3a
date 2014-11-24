@@ -11,9 +11,12 @@ class Packet_Service(object):
         total_pkt = ""
         total_pkt = self.craft_ip(packet)
         proto = packet.protocol
-        if proto == "TCP":
+        if str.lower(proto) == "tcp":
+            print len(total_pkt)
             total_pkt += self.craft_tcp(packet)
-        elif proto == "UDP":
+            print len(total_pkt)
+            print repr(total_pkt)
+        elif proto == "udp":
             total_pkt +=  self.craft_udp(packet)
             if packet.is_DNS == False:
                 print "BAD RECONTSTRUCT"
@@ -97,7 +100,7 @@ class Packet_Service(object):
     def seq_number(self, pkt):
         seq_byte = pkt[4:8]
         unpacked_byte = struct.unpack("!L", seq_byte)[0]
-        return seq_byte
+        return unpacked_byte
 
     def total_length(self, pkt):
         total_byte = pkt[2:4]
@@ -185,9 +188,9 @@ class Packet_Service(object):
     def craft_tcp(self, packet):
         source = packet.dst_port
         dest = packet.src_port
-        sequence_num = 0
-        ack = self.seq_num + 1
-        res_off = 5
+        seq = 0
+        ack = packet.seq_num + 1
+        res_off = 5 << 4
         flag = 20
         window = 1
         urgent_pointer = 0
@@ -219,13 +222,13 @@ class Packet_Service(object):
         return unpacked
 
     def craft_ip(self, packet):
-        version = 4
-        header_len = 5 << 4
+        version = 4 << 4
+        header_len = 5
         first_byte = version | header_len
         tos = 0
         total_length = 40
         identification = packet.ip_id
-        fragment_offset = 1 << 1
+        fragment_offset = 0
         ttl = 64
         protocol = self.protocol_to_int[packet.protocol]
         header_checksum = 0
