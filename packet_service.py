@@ -49,6 +49,8 @@ class Packet_Service(object):
         start_trans_header = header_len * 4
         if packet0.protocol == "tcp":
             try:
+                flags = self.get_tcp_flags(pkt, start_trans_header)
+                packet0.syn = ((flags & 0x02) >> 1) == 1
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
                 packet0.seq_num = self.seq_number(pkt)
@@ -148,6 +150,11 @@ class Packet_Service(object):
         id_bytes = pkt[4:6]
         unpacked = struct.unpack("!H",id_bytes)[0]
         return unpacked
+
+    def get_tcp_flags(self, pkt, offset):
+        flag_bytes = pkt[offset + 13]
+        unpacked_byte = struct.unpack("!B", flag_bytes)[0]
+        return unpacked_byte
 
 
     def parse_dns(self, pkt, offset):

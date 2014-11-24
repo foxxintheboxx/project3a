@@ -28,11 +28,9 @@ class Firewall:
         if verdict == "pass":
             self.send_pkt(pkt_dir, pkt)
         elif verdict == "deny":
+            ## ADD rule about syn
             rst_pkt = self.packet_service.packet_to_data(packet)
-            if str.lower(packet.proto) == "tcp":
-                self.send_pkt(PKT_DIR_OUTGOING, rst_pkt)
-            else:
-                self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
+            self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
         else:
             print verdict
             self.send_pkt(pkt_dir, pkt)

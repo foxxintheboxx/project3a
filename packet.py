@@ -16,6 +16,7 @@ class Packet(object):
         self.seq_num = None #TCP
         self.trans_length = None 
         self.window = 1 #TCP
+        self.syn = False
 
         self.icmp_type = None 
         self.dns_query = None
