@@ -17,7 +17,7 @@ class Packet(object):
         self.trans_length = None 
         self.window = 1 #TCP
 
-        self.icmp_type = None
+        self.icmp_type = None 
         self.dns_query = None
         self.is_DNS = False
         self.protocol = "unknown"
