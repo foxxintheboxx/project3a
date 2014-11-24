@@ -23,8 +23,11 @@ class Packet_Service(object):
 	def data_to_packet(self, pkt, pkt_dir):
 		packet = Packet()
         header_len = self.ip_header_length(pkt)
+        packet.dir = pkt_dir
         if header_len < 5:
             return None
+        packet.total_length = self.total_length(pkt)
+        packet.ip_id = self.get_ip_id(pkt)
         proto_dec = self.get_protocol(pkt)
         packet.set_protocol(proto_dec)
         src = dst = None
@@ -44,6 +47,7 @@ class Packet_Service(object):
             try:
                 packet.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
+                packet.seq_num = self.seq_number(pkt)
             except:
                 return None
 
@@ -94,12 +98,6 @@ class Packet_Service(object):
     	seq_byte = pkt[4:8]
     	unpacked_byte = struct.unpack("!L", seq_byte)[0]
     	return seq_byte
-
-    def version(self, pkt):
-        byte0 = pkt[0]
-        unpacked_byte = struct.unpack("!B", byte0)[0]
-        version = unpacked_byte & 0xF0
-        return version
 
     def total_length(self, pkt):
         total_byte = pkt[2:4]

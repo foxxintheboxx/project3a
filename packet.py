@@ -1,15 +1,13 @@
-
+from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 class Packet(object):
     def __init__(self):
         #IP HEADER
-        self.version = None
-        self.header_length = None
         self.total_length = None
         self.frag_offset = None
         self.ip_flags = None
         self.src_ip = None
         self.dest_ip = None
-
+        self.ip_id = None
 
 
         #TRANSPORT
@@ -17,10 +15,7 @@ class Packet(object):
         self.dst_port = None
         self.seq_num = None #TCP
         self.trans_length = None 
-        self.checksum = None
         self.window = 1 #TCP
-        self.urg_pointer = None #TCP
-
 
         self.icmp_type = None
         self.dns_query = None

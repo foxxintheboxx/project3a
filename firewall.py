@@ -29,8 +29,11 @@ class Firewall:
             self.send_pkt(pkt_dir, pkt)
         elif verdict == "deny":
             rst_pkt = self.packet_service.packet_to_data(packet)
+            packet = self.packet_service.data_to_packet(pkt, pkt_dir)
+
             self.send_pkt(pkt_dir, rst_pkt)
         return
+
 
     #sends packet to respected location
     def send_pkt(self, pkt_dir, pkt):
