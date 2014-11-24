@@ -1,7 +1,0 @@
-%asdf
-
-
-deny tcp 8.8.8.8 any
-
-
-

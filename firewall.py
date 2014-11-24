@@ -29,7 +29,7 @@ class Firewall:
             self.send_pkt(pkt_dir, pkt)
         elif verdict == "deny":
             rst_pkt = self.packet_service.packet_to_data(packet)
-            if str.lower(packet.proto) == "tcp:
+            if str.lower(packet.proto) == "tcp":
                 self.send_pkt(PKT_DIR_OUTGOING, rst_pkt)
             else:
                 self.send_pkt(PKT_DIR_INCOMING, rst_pkt)

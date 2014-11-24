@@ -13,13 +13,16 @@ class Packet_Service(object):
         proto = packet.protocol
         if str.lower(proto) == "tcp":
             print len(total_pkt)
+            total_pkt = self.craft_ip(packet)
             total_pkt += self.craft_tcp(packet)
             print len(total_pkt)
             print repr(total_pkt)
         elif proto == "udp":
-            total_pkt +=  self.craft_udp(packet)
             if packet.is_DNS == False:
                 print "BAD RECONTSTRUCT"
+                return None
+            total_pkt = self.craft_ip(packet)
+            total_pkt +=  self.craft_udp(packet)
             total_pkt += self.craft_dns(packet)
         return total_pkt
 
@@ -43,9 +46,7 @@ class Packet_Service(object):
             return None
         packet0.src_ip = src
         packet0.dest_ip = dst
-
         start_trans_header = header_len * 4
-        
         if packet0.protocol == "tcp":
             try:
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
@@ -53,7 +54,6 @@ class Packet_Service(object):
                 packet0.seq_num = self.seq_number(pkt)
             except:
                 return None
-
         elif packet0.protocol == "udp":
             try:
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
@@ -75,7 +75,6 @@ class Packet_Service(object):
                 return
         else:
             return None
-
         return packet0
 
 
@@ -145,6 +144,12 @@ class Packet_Service(object):
         unpacked_byte = struct.unpack("!I", address_byte)[0]
         return unpacked_byte
 
+    def get_ip_id(self, pkt):
+        id_bytes = pkt[4:6]
+        unpacked = struct.unpack("!H",id_bytes)[0]
+        return unpacked
+
+
     def parse_dns(self, pkt, offset):
         dns_header = pkt[offset:offset+12]
         qd_count_byte = dns_header[4:6]
@@ -200,6 +205,19 @@ class Packet_Service(object):
         tcp_header = struct.pack("!HHLLBBHHH", source, dest, seq, ack, res_off, flag, window, check_sum, urgent_pointer)
         return tcp_header
 
+    def craft_udp(self, packet):
+        source = packet.dst_port
+        dest = packet.src_port
+        length = 8
+        checksum = 0
+        udp_header = struct.pack("!HHHH", source, dest, length, checksum)
+        checksum = self.checksum_calc(udp_header, 8)
+        udp_header = struct.pack("!HHHH", source, dest, length, checksum)
+        return udp_header
+
+    def craft_dns(self, packet):
+        return None
+
     def checksum_calc(self, packet_string, num_bytes):
         index = 0;
         sum = 0;
@@ -213,15 +231,7 @@ class Packet_Service(object):
         sum = a + b
         return (sum & 0xffff) + (sum >> 16)
 
-
-
-
-    def get_ip_id(self, pkt):
-        id_bytes = pkt[4:6]
-        unpacked = struct.unpack("!H",id_bytes)[0]
-        return unpacked
-
-    def craft_ip(self, packet):
+    def craft_ip(self, packet, pkt_dir):
         version = 4 << 4
         header_len = 5
         first_byte = version | header_len
