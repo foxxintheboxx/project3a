@@ -31,7 +31,7 @@ class Firewall:
             rst_pkt = self.packet_service.packet_to_data(packet)
             packet = self.packet_service.data_to_packet(pkt, pkt_dir)
 
-            self.send_pkt(pkt_dir, rst_pkt)
+            self.iface_ext.send_ip_packet(rst_pkt)
         return
 
 
