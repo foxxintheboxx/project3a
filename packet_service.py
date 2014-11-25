@@ -57,10 +57,10 @@ class Packet_Service(object):
                 packet0.seq_num = self.seq_number(pkt)
 
 
-                if (pkt == PKT_DIR_OUTGOING and pkt.dest_ip == 80) or (pkt.src_port == 80):
+                if (pkt_dir == PKT_DIR_OUTGOING and packet0.dest_ip == 80) or (packet0.src_port == 80):
                     http_offset = int(self.get_end_tcp(pkt,start_trans_header))
                     packet0.http_contents = self.get_http_contents(pkt, start_trans_header + http_offset)
-                    
+
             except:
                 return None
         elif packet0.protocol == "udp":
