@@ -37,6 +37,7 @@ class Packet_Service(object):
         proto_dec = self.get_protocol(pkt)
         packet0.set_protocol(proto_dec)
         src = dst = None
+
         try:
             src = self.get_src(pkt)
             dst = self.get_dst(pkt)
@@ -54,6 +55,12 @@ class Packet_Service(object):
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
                 packet0.seq_num = self.seq_number(pkt)
+
+
+                if (pkt == PKT_DIR_OUTGOING and pkt.dest_ip == 80) or (pkt.src_port == 80):
+                    http_offset = int(self.get_end_tcp(pkt,start_trans_header))
+                    packet0.http_contents = self.get_http_contents(pkt, start_trans_header + http_offset)
+                    
             except:
                 return None
         elif packet0.protocol == "udp":
@@ -123,6 +130,12 @@ class Packet_Service(object):
         unpacked_byte = struct.unpack("!H", dst_bytes)[0]
         return unpacked_byte
 
+    def get_end_tcp(self, pkt, offset):
+        offset_byte = pkt[offset+12, offset+13]
+        unpacked_byte = struct.unpack("!B", offset_byte)
+        offset_nybble = unpacked_byte & 0x0F
+        return unpacked_byte
+
     #get icmp type -- firsty byte of icmp header
     def get_icmp_type(self, pkt, offset):
         type_byte = pkt[offset]
@@ -155,6 +168,12 @@ class Packet_Service(object):
         flag_bytes = pkt[offset + 13]
         unpacked_byte = struct.unpack("!B", flag_bytes)[0]
         return unpacked_byte
+
+    def get_http_contents(self, pkt, offset):
+        content = pkt[offset:]
+        print "HTTTTTTP CONTENT: "
+        print content
+        return content
 
 
     def parse_dns(self, pkt, offset):

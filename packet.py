@@ -25,6 +25,8 @@ class Packet(object):
 
         self.dir = None
 
+        self.http_contents = None
+
 
 
     def set_protocol(self,decimal_value):
