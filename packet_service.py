@@ -58,10 +58,11 @@ class Packet_Service(object):
 
 
                 if (pkt_dir == PKT_DIR_OUTGOING and packet0.dest_ip == 80) or (packet0.src_port == 80):
-                    http_offset = int(self.get_end_tcp(pkt,start_trans_header))
+                    http_offset = 4*int(self.get_end_tcp(pkt,start_trans_header))
                     packet0.http_contents = self.get_http_contents(pkt, start_trans_header + http_offset)
 
-            except:
+            except Exception as e:
+                print e
                 return None
         elif packet0.protocol == "udp":
             try:
@@ -131,8 +132,8 @@ class Packet_Service(object):
         return unpacked_byte
 
     def get_end_tcp(self, pkt, offset):
-        offset_byte = pkt[offset+12, offset+13]
-        unpacked_byte = struct.unpack("!B", offset_byte)
+        offset_byte = pkt[offset+12: offset+13]
+        unpacked_byte = struct.unpack("!B", offset_byte)[0]
         offset_nybble = unpacked_byte & 0x0F
         return unpacked_byte
 
