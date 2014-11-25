@@ -13,7 +13,9 @@ class FireWall_Rules(object):
     #@return True or False
     def check_rules(self, pkt, dir):
         #depending on packet type
-        #
+        # #
+        # if pkt.syn == False:
+        #     return "pass"
         ext_port = None
         ext_ip = None
         verdict = "drop"
