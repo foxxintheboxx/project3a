@@ -137,7 +137,7 @@ class Packet_Service(object):
         offset_byte = pkt[offset+12: offset+13]
         unpacked_byte = struct.unpack("!B", offset_byte)[0]
         offset_nybble = unpacked_byte & 0xF0
-        return offset_nybble
+        return (offset_nybble>>4)
 
     #get icmp type -- firsty byte of icmp header
     def get_icmp_type(self, pkt, offset):
