@@ -1,5 +1,5 @@
 #!/usr/bin/env python        
-import socket, struct, firewall_rules, packet, packet_service
+import socket, struct, firewall_rules, packet, packet_service, log_handler
 from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 
 # TODO: Feel free to import any Python standard moduless as necessary.
@@ -18,6 +18,7 @@ class Firewall:
         fw_rules = firewall_rules.FireWall_Rules(rule_content)
 
         self.fw_rules = fw_rules
+        self.log_handler = Log_Handler()
 
     # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
     # @pkt: the actual data of the IPv4 packet (including IP header)
@@ -31,6 +32,11 @@ class Firewall:
             ## ADD rule about syn
             rst_pkt = self.packet_service.packet_to_data(packet)
             self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
+        elif verdict == "log":
+            #if its not the right seq number, drop it
+            #if it is an unmatching response, drop it
+            #else, send it
+            #log it
         else:
             print verdict
             self.send_pkt(pkt_dir, pkt)

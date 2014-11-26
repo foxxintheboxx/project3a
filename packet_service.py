@@ -57,11 +57,12 @@ class Packet_Service(object):
                 packet0.seq_num = self.seq_number(pkt)
 
 
-                if (pkt_dir == PKT_DIR_OUTGOING and packet0.dest_ip == 80) or (packet0.src_port == 80):
+                if (pkt_dir == PKT_DIR_OUTGOING and packet0.dest_ip == 80) or (pkt_dir == PKT_DIR_INCOMING and packet0.src_port == 80):
                     http_offset = 4*int(self.get_end_tcp(pkt,start_trans_header))
                     print start_trans_header, "trans header <<__"
                     print http_offset, "http offsettttt << --"
                     packet0.http_contents = self.get_http_contents(pkt, start_trans_header + http_offset)
+                    packet0.http_host = self.get_http_host(packet0)
 
             except Exception as e:
                 print e
@@ -89,6 +90,8 @@ class Packet_Service(object):
             return None
         return packet0
 
+    def get_http_host(self, pkt):
+        if 
 
 #MARK PARSING
     #returns a big endian version of pkt
