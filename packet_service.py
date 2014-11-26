@@ -57,8 +57,12 @@ class Packet_Service(object):
                 packet0.seq_num = self.seq_number(pkt)
 
 
-                if (pkt_dir == PKT_DIR_OUTGOING and packet0.dest_ip == 80) or (pkt_dir == PKT_DIR_INCOMING and packet0.src_port == 80):
+                if (pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 80) or (pkt_dir == PKT_DIR_INCOMING and packet0.src_port == 80):
                     http_offset = 4*int(self.get_end_tcp(pkt,start_trans_header))
+
+                    print "dir: ", pkt_dir
+                    print "srcport: ", packet0.src_port
+                    print "dstport: ", packet0.dst_port
                     print start_trans_header, "trans header <<__"
                     print http_offset, "http offsettttt << --"
                     packet0.http_contents = self.get_http_contents(pkt, start_trans_header + http_offset)
