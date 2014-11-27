@@ -18,7 +18,7 @@ class Firewall:
         fw_rules = firewall_rules.FireWall_Rules(rule_content)
 
         self.fw_rules = fw_rules
-        self.log_handler = Log_Handler()
+        self.log_handler = log_handler.Log_Handler()
 
     # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
     # @pkt: the actual data of the IPv4 packet (including IP header)
@@ -37,6 +37,7 @@ class Firewall:
             #if it is an unmatching response, drop it
             #else, send it
             #log it
+            pass
         else:
             print verdict
             self.send_pkt(pkt_dir, pkt)
