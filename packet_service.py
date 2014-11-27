@@ -66,6 +66,7 @@ class Packet_Service(object):
                         print "incoming"
                     print "srcport: ", packet0.src_port
                     print "dstport: ", packet0.dst_port
+                    print "total-size: ", packet0.total_length
                     print start_trans_header, "trans header <<__"
                     print http_offset, "http offsettttt << --"
                     packet0.http_contents = self.get_http_contents(pkt, start_trans_header + http_offset)

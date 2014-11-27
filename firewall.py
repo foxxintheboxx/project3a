@@ -26,6 +26,7 @@ class Firewall:
         # TODO: Your main firewall code will be here.
         packet = self.packet_service.data_to_packet(pkt, pkt_dir)
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
+        print packet.http_contents == ""
         if verdict == "pass":
             self.send_pkt(pkt_dir, pkt)
         elif verdict == "deny":
@@ -36,7 +37,8 @@ class Firewall:
             #if its not the right seq number, drop it
             #if it is an unmatching response, drop it
             #else, send it
-            #log it
+            #log i
+            print packet.http_contents, "THESE ARE THE CONTENTS"
             pass
         else:
             print verdict
