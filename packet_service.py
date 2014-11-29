@@ -84,9 +84,15 @@ class Packet_Service(object):
             if pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 53:
                 try:
                     result = self.parse_dns(pkt, start_trans_header + 8)
-                    if result != None:
-                        packet0.dns_query = result
+                    if result != None and result != -1:
+                        packet0.dns_query = result[2]
                         packet0.is_DNS = True
+                        packet0.dns_question_bytes = result[3]
+                        packet0.dns_opcode_plus = result[1]
+                        packet0.dns_id = result[0]
+                    if result == -1:
+                        #drop dns packet with qtype 28
+                        return None
                 except:
                     return None
         elif packet0.protocol == "icmp":
@@ -191,7 +197,10 @@ class Packet_Service(object):
 
 
     def parse_dns(self, pkt, offset):
+        response = ("ID", "OPCODE", "QUERY", "QUESTION")
         dns_header = pkt[offset:offset+12]
+        response[0] = self.dns_id(dns_header)
+        response[1] = self.dns_opcode_plus(dns_header)
         qd_count_byte = dns_header[4:6]
         qd_count = struct.unpack("!H", qd_count_byte)[0]
         if qd_count != 1:
@@ -199,6 +208,7 @@ class Packet_Service(object):
         offset = offset + 12
 
         question = pkt[offset:]
+        response[3] = question
         qname_end = 0
         byte_val = struct.unpack("!B", question[qname_end])[0]
         q_name = []
@@ -221,13 +231,27 @@ class Packet_Service(object):
         q_type = struct.unpack("!H", q_type_byte)[0]
         q_class = struct.unpack("!H", q_class_byte)[0]
 
-        if q_type != 28 and q_type != 1:
-            return None
+        ##I eliminated QTYPE == 28 (AAAA) 
+        if q_type == 28:
+            # some flag to indicate to drop because otherwise it would think it is just udp
+            return -1 
 
         if q_class != 1:
+            #not dns
             return None
+        response[2] = q_name
+        return respones
 
-        return q_name
+    def dns_id(self, dns_header):
+        id_byte = dns_header[0:2]
+        _id = struct.unpack("!H", id_byte)
+        return _id
+
+    def dns_opcode_plus(self, dns_header):
+        op_bytes = dns_header[2:3]
+        _bytes = struct.unpack("!B", op_bytes)
+        return _bytes
+
 
 #MARK CONSTRUCTING
     def craft_tcp(self, packet):
@@ -256,8 +280,21 @@ class Packet_Service(object):
         return udp_header
 
     def craft_dns(self, packet):
+        dns_header = self.craft_dns_header(packet)
+        question = packet.dns_question_bytes
+        ## add answer fields
         return None
 
+    def craft_dns_header(self, packet):
+        _id = packet.dns_id
+        opcode_plus = packet.dns_opcode_plus
+        rcode_plus = 0
+        qd_count = 1
+        ancount = 1
+        nscount = 0
+        arcount = 0
+        dns_header = struct.pack("!HBBHHHH", _id, opcode_plus, rcode_plus, qd_count, ancount, nscount, arcount)
+        return dns_header
     def checksum_calc(self, packet_string, num_bytes):
         index = 0;
         sum = 0;

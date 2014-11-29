@@ -19,14 +19,20 @@ class Packet(object):
         self.syn = False
 
         self.icmp_type = None 
-        self.dns_query = None
-        self.is_DNS = False
         self.protocol = "unknown"
 
         self.dir = None
 
         self.http_contents = None
         self.http_host = None
+
+        #DNS FIELDS
+        self.dns_query = None
+        self.is_DNS = False
+        self.dns_question_bytes = None
+        self.dns_id = None
+        self.dns_opcode_plus = None
+        
 
 
 
