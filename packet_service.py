@@ -23,7 +23,7 @@ class Packet_Service(object):
                 return None
             total_pkt = self.craft_ip(packet)
             total_pkt +=  self.craft_udp(packet)
-            total_pkt += self.craft_dns(packet)
+            # total_pkt += self.craft_dns(packet)
 
         return total_pkt
 
