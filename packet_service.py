@@ -85,11 +85,15 @@ class Packet_Service(object):
                 try:
                     result = self.parse_dns(pkt, start_trans_header + 8)
                     if result != None and result != -1:
-                        packet0.dns_query = result[2]
-                        packet0.is_DNS = True
-                        packet0.dns_question_bytes = result[3]
-                        packet0.dns_opcode_plus = result[1]
                         packet0.dns_id = result[0]
+                        packet0.dns_opcode_plus = result[1]
+                        packet0.dns_query = result[2]
+                        packet0.dns_question_bytes = result[3]
+                        packet0.qname_bytes = result[4]
+                        packet0.is_DNS = True
+                        
+                        
+                        
                     if result == -1:
                         #drop dns packet with qtype 28
                         return None
@@ -197,7 +201,7 @@ class Packet_Service(object):
 
 
     def parse_dns(self, pkt, offset):
-        response = ("ID", "OPCODE", "QUERY", "QUESTION")
+        response = ("ID", "OPCODE", "QUERY", "QUESTION", "QNAME_BYTE")
         dns_header = pkt[offset:offset+12]
         response[0] = self.dns_id(dns_header)
         response[1] = self.dns_opcode_plus(dns_header)
@@ -224,7 +228,7 @@ class Packet_Service(object):
 
             q_name.append(string)
             byte_val = struct.unpack("!B", question[qname_end])[0]
-
+        qname_byte = question[0: qname_end + 1]
         q_type_byte = question[qname_end + 1 : qname_end + 3]
         q_class_byte = question[qname_end + 3: qname_end + 5]
 
@@ -240,6 +244,7 @@ class Packet_Service(object):
             #not dns
             return None
         response[2] = q_name
+        response[4] = qname_byte
         return respones
 
     def dns_id(self, dns_header):
@@ -283,7 +288,14 @@ class Packet_Service(object):
         dns_header = self.craft_dns_header(packet)
         question = packet.dns_question_bytes
         ## add answer fields
-        return None
+        _type = _class = ttl = 1
+        _rdlength = 4
+        _pointerid = 3 << 14
+        _pointer = _pointerid | _pointerid
+        cat_ip = 917364886
+        dns_answer = struct.pack("!HHHHHH", _pointer, _type, _class, _ttl, _rdlength, cat_ip)
+        dns_pkt = dns_header + question + dns_answer
+        return dns_pkt
 
     def craft_dns_header(self, packet):
         _id = packet.dns_id
