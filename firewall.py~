@@ -27,6 +27,7 @@ class Firewall:
         packet = self.packet_service.data_to_packet(pkt, pkt_dir)
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
         #print packet.http_contents == ""
+        print packet.proto
         if verdict == "pass":
             self.send_pkt(pkt_dir, pkt)
         elif verdict == "deny":

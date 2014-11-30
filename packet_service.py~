@@ -290,7 +290,7 @@ class Packet_Service(object):
         tcp_header = struct.pack("!HHLLBBHHH", source, dest, seq, ack, res_off, flag, window, check_sum, urgent_pointer)
         check_sum = self.checksum_calc(tcp_header, 20)
         tcp_header = struct.pack("!HHLLBBHHH", source, dest, seq, ack, res_off, flag, window, check_sum, urgent_pointer)
-        print repr(tcp_header)
+        print tcp_header
         return tcp_header
 
     def craft_udp(self, packet):
