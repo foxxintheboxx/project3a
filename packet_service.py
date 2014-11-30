@@ -309,10 +309,8 @@ class Packet_Service(object):
         ## add answer fields
         _type = _class = _ttl = 1
         _rdlength = 4
-        _pointerid = 3 << 14
-        _pointer = _pointerid | 12
         cat_ip = 917364886
-        dns_answer = struct.pack("!HHHHHL", _pointer, _type, _class, _ttl, _rdlength, cat_ip)
+        dns_answer = packet.qname_bytes + struct.pack("!HHHHL", _type, _class, _ttl, _rdlength, cat_ip)
         dns_pkt = dns_header + question + dns_answer
         return dns_pkt
 
