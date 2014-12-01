@@ -5,7 +5,7 @@ from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 class Log_Handler(object):
 
 	#will take in a list of lines for the rules
-	def __init__(self, rules_list):
+	def __init__(self):
 		self.partial_requests = {}
 		self.partial_request_indexes = {}
 		self.current_requests = {}
@@ -175,4 +175,3 @@ log_handler = Log_Handler()
 request = "GET / HTTP/1.1\nHost: google.com\nUser-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/\nAccept-Encoding: gzip\nAccept-Charset: ISO-8859-1,UTF-8;q=0.7,*;q=0.7\nCache-Control: no-cache\nAccept-Language: de,en;q=0.7,en-us;q=0.3 \n \n"
 response = "HTTP/1.1 301 Moved Permanently\nLocation: http://www.google.com/\nContent-Type: text/html; charset=UTF-8\nDate: Mon, 18 Nov 2013 23:58:12 GMT\nExpires: Wed, 18 Dec 2013 23:58:12 GMT\nCache-Control: public, max-age=2 592000\nServer: gws\nContent-Length: 219\nX-XSS-Protection: 1; mode=block\nX-Frame-Options: SAMEORIGIN\nAlternate-Protocol: 80:quic"
 
-log_handler.http_parser(request+response).to_string()
