@@ -4,7 +4,8 @@ from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 
 class Log_Handler(object):
 
-	def __init__(self):
+	#will take in a list of lines for the rules
+	def __init__(self, rules_list):
 		self.partial_requests = {}
 		self.partial_request_indexes = {}
 		self.current_requests = {}
@@ -18,12 +19,10 @@ class Log_Handler(object):
 
 		#if outgoing --> request
 		if direction == PKT_DIR_OUTGOING:
-			key = (destination_ip, src_port)
-
-
+			key = (pkt.destination_ip, pkt.src_port)
 
 			if key in self.partial_requests:
-				self.partial_request_indexes[key]+=1 
+				self.partial_request_indexes[key] += 1 
 				self.partial_requests[key] += pkt.http_contents
 			else:
 				self.partial_request_indexes[key] = pkt.seq_num
@@ -32,13 +31,11 @@ class Log_Handler(object):
 			if self.is_complete(self.partial_requests[key]):
 				self.promote_request(key)
 
-					
-
-
 			#see if its in the request builder dictionary
 		#if incoming --> response
 		elif direction == PKT_DIR_INCOMING:
 			key = (source_ip, dest_port)
+
 			if key in self.partial_responses:
 				self.partial_responses_indexes[key] += 1
 				self.partial_responses[key] += pkt.http_contents
@@ -52,65 +49,100 @@ class Log_Handler(object):
 			#
 
 	#to be called outside log handler to tell whether a response should be passed through or dropped
+	#!! dont think should be used
 	def have_request(self, src_ip, src_port):
 		key = (source_ip, source_port)
 		return key in self.current_requests
 
 	#promote a complete request
 	def promote_request(self, key):
-		self.current_requests[key] = self.partial_requests.pop(key)
+		request_string = self.partial_requests.pop(key)
+		partial_http_contents = self.parse_request(request_string)
+		self.current_requests[key] = partial_http_contents
+
 		self.partial_request_indexes.pop(key)
 
 	#to write things back to the log once everthing is done
 	def write_back(key):
-		self.current_requests.pop(key) 
-		self.partial_responses.pop(key)
+		partial_http_contents = self.current_requests.pop(key) 
+		response_string = self.partial_responses.pop(key)
+		whole_http_contents = self.parse_response(response_string, partial_http_contents)
+
 		self.partial_responses_indexes.pop(key)
 
 	#to be called outside log handler to figure whether the packet should be passed or dropped
-	def get_expected_request_index(self, dest_ip, dest_port):
-		key = (dest_ip,dest_port)
+	def get_expected_request_index(self, dest_ip, source_port):
+		key = (dest_ip, source_port)
 		return self.partial_request_indexes[key] + 1
 
-	def get_expected_response_index(self, src_ip, src_port):
-		key = (src_ip,src_port)
+	def get_expected_response_index(self, src_ip, destination_port):
+		key = (src_ip, destination_port)
 		return self.partial_responses_indexes[key] + 1
 
 
-	def handle_request(self, key, http_contents):
-		pass
-
-
-	def handle_response():
-		pass
-
-	#@param http_string should be the request string and response string concantenated together
-	#@return an HTTP Contents instance
-	def http_parser(self, http_string):
+	def parse_request(self, http_string):
 		lines = http_string.lower().split("\n")
 		line_num = 0
 		contents = self.Http_Contents()
+
+		request_line = lines.pop(0).split(" ")
+		contents.method = request_line[0]
+		contents.path = request_line[1]
+		contents.version = request_line[2]
+
 		for line in lines:
-			request_line_contents = line.split(" ")
-			if len(request_line_contents) == 0:
+			request_line = line.split(" ")
+			if request_line == "":
 				break
+			elif request_line[0] == "host:":
+				contents.hostname = request_line[1]
 
-			#if payload, continue
+		return contents 
 
-			if request_line_contents[0] in ["post","get", "put","drop"]:
-				contents.method = request_line_contents[0]
-				contents.path = request_line_contents[1]
-				contents.version = request_line_contents[2]
+	def parse_response(self, http_string, http_contents):
+		lines = http_string.lower().split("\n")
+		line_num = 0
 
-			elif request_line_contents[0] == "host:":
-				contents.hostname = request_line_contents[1]
+		for line in lines:
+			response_line = lines.split(" ")
+			if response_line == " ":
+				break
+			elif response_line[0] == http_contents.version:
+				http_contents.statuscode = response_line[1]
+			elif response_line[0] == "content-length":
+				http_contents.object_size = response_line[1]
 
-			elif request_line_contents[0] == "content-length:":
-				contents.object_size = request_line_contents[1]
+		return 
 
-			elif "http" in request_line_contents[0]:
-				contents.statuscode = request_line_contents[1]
-		return contents
+
+
+	#@param http_string should be the request string and response string concantenated together
+	#@return an HTTP Contents instance
+	# def http_parser(self, http_string):
+	# 	lines = http_string.lower().split("\n")
+	# 	line_num = 0
+	# 	contents = self.Http_Contents()
+	# 	for line in lines:
+	# 		request_line_contents = line.split(" ")
+	# 		if len(request_line_contents) == 0:
+	# 			break
+
+	# 		#if payload, continue
+
+	# 		if request_line_contents[0] in ["post","get", "put","drop"]:
+	# 			contents.method = request_line_contents[0]
+	# 			contents.path = request_line_contents[1]
+	# 			contents.version = request_line_contents[2]
+
+	# 		elif request_line_contents[0] == "host:":
+	# 			contents.hostname = request_line_contents[1]
+
+	# 		elif request_line_contents[0] == "content-length:":
+	# 			contents.object_size = request_line_contents[1]
+
+	# 		elif "http" in request_line_contents[0]:
+	# 			contents.statuscode = request_line_contents[1]
+	# 	return contents
 
 
 
