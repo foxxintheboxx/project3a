@@ -9,11 +9,10 @@ class Packet_Service(object):
 
     def packet_to_data(self, packet):
         total_pkt = ""
-        total_pkt = self.craft_ip(packet)
         proto = packet.protocol
         if str.lower(proto) == "tcp":
             print len(total_pkt)
-            total_pkt = self.craft_ip(packet)
+            total_pkt = self.craft_ip(packet, 40)
             total_pkt += self.craft_tcp(packet)
             print len(total_pkt)
             print repr(total_pkt)
@@ -21,10 +20,9 @@ class Packet_Service(object):
             if packet.is_DNS == False:
                 print "BAD RECONTSTRUCT"
                 return None
-            total_pkt = self.craft_ip(packet)
-            total_pkt +=  self.craft_udp(packet)
-            # total_pkt += self.craft_dns(packet)
-
+            total_pkt = self.craft_dns(packet)
+            total_pkt =  self.craft_udp(packet, len(total_pkt)) + total_pkt
+            total_pkt = self.craft_ip(packet, len(total_pkt)) + total_pkt
         return total_pkt
 
     def data_to_packet(self, pkt, pkt_dir):
@@ -269,9 +267,7 @@ class Packet_Service(object):
         return _id
 
     def dns_opcode_plus(self, dns_header):
-        print "wow"
         op_bytes = dns_header[2:3]
-        print "yo"
         _bytes = struct.unpack("!B", op_bytes)[0]
         return _bytes
 
@@ -290,17 +286,16 @@ class Packet_Service(object):
         tcp_header = struct.pack("!HHLLBBHHH", source, dest, seq, ack, res_off, flag, window, check_sum, urgent_pointer)
         check_sum = self.checksum_calc(tcp_header, 20)
         tcp_header = struct.pack("!HHLLBBHHH", source, dest, seq, ack, res_off, flag, window, check_sum, urgent_pointer)
-        print repr(tcp_header)
         return tcp_header
 
-    def craft_udp(self, packet):
+    def craft_udp(self, packet, leng):
         source = packet.dst_port
         dest = packet.src_port
-        length = 8
+        length = leng + 8
         checksum = 0
         udp_header = struct.pack("!HHHH", source, dest, length, checksum)
-        checksum = self.checksum_calc(udp_header, 8)
-        udp_header = struct.pack("!HHHH", source, dest, length, checksum)
+        #checksum = self.checksum_calc(udp_header, 8)
+        #udp_header = struct.pack("!HHHH", source, dest, length, checksum)
         return udp_header
 
     def craft_dns(self, packet):
@@ -310,22 +305,26 @@ class Packet_Service(object):
         _type = _class = _ttl = 1
         _rdlength = 4
         cat_ip = 917364886
-        dns_answer = packet.qname_bytes + struct.pack("!HHHHL", _type, _class, _ttl, _rdlength, cat_ip)
+        dns_answer = packet.qname_bytes + struct.pack("!HHLHL", _type, _class, _ttl, 4, cat_ip)
         dns_pkt = dns_header + question + dns_answer
         return dns_pkt
 
     def craft_dns_header(self, packet):
         _id = packet.dns_id
-        print type(_id)
-        opcode_plus = packet.dns_opcode_plus
-        print type(opcode_plus)
+        print "id"
+        print _id
+        opcode_plus = 1
+        print "opcode plus"
+        print opcode_plus
         rcode_plus = 0
         qd_count = 1
         ancount = 1
         nscount = 0
         arcount = 0
-        dns_header = struct.pack("!HBBHHHH", _id, opcode_plus, rcode_plus, qd_count, ancount, nscount, arcount)
+        dns_header = struct.pack("!HHHHHH", _id, (1 << 15) | (1 << 8), qd_count, ancount, nscount, arcount)
+
         return dns_header
+
     def checksum_calc(self, packet_string, num_bytes):
         index = 0;
         sum = 0;
@@ -339,12 +338,12 @@ class Packet_Service(object):
         sum = a + b
         return (sum & 0xffff) + (sum >> 16)
 
-    def craft_ip(self, packet):
+    def craft_ip(self, packet, leng):
         version = 4 << 4
         header_len = 5
         first_byte = version | header_len
         tos = 0
-        total_length = 40
+        total_length = leng + 20
         identification = packet.ip_id
         fragment_offset = 0
         ttl = 64

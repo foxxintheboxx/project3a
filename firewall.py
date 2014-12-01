@@ -32,6 +32,7 @@ class Firewall:
         elif verdict == "deny":
             ## ADD rule about syn
             rst_pkt = self.packet_service.packet_to_data(packet)
+            print 
             self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
         elif verdict == "log":
             #if its not the right seq number, drop it
