@@ -12,16 +12,28 @@ class Log_Handler(object):
 		self.partial_responses = {}
 		self.partial_responses_indexes = {}
 
+		self.log_dict = {}
+
+	class Log_Buffer():
+		def __init__():
+			self.key = None
+			self.current_request = None
+			self.current_response = None
+			self.current_request_index = None
+			self.current_response_index = None
+
+
 
 	#should only handle actual tcp packets, if direction is incoming it must be a response vise versa
 	#responses should only be passed through if we have a request for it
 	def handle_log(self, pkt, direction):
 
 		#if outgoing --> request
+
 		if direction == PKT_DIR_OUTGOING:
 			key = (pkt.destination_ip, pkt.src_port)
 
-			if key in self.partial_requests:
+			if key in self.log_dict:
 				self.partial_request_indexes[key] += 1 
 				self.partial_requests[key] += pkt.http_contents_string
 			else:
