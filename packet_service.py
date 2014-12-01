@@ -55,7 +55,7 @@ class Packet_Service(object):
                 print "printing src port"
                 print packet0.src_port
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
-                packet0.seq_num = self.seq_number(pkt)
+                packet0.seq_num = self.seq_number(pkt, start_trans_header)
 
 
                 if (pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 80) or (pkt_dir == PKT_DIR_INCOMING and packet0.src_port == 80):
@@ -137,9 +137,11 @@ class Packet_Service(object):
         unpacked_byte = struct.unpack("!L", ack_byte)[0]
         return unpacked_byte
 
-    def seq_number(self, pkt):
-        seq_byte = pkt[4:8]
+    def seq_number(self, pkt, offset):
+        seq_byte = pkt[offset + 4: offset + 8]
         unpacked_byte = struct.unpack("!L", seq_byte)[0]
+	print "getting seq"
+	print unpacked_byte
         return unpacked_byte
 
     def total_length(self, pkt):
@@ -276,15 +278,20 @@ class Packet_Service(object):
     def craft_tcp(self, packet):
         source = packet.dst_port
         dest = packet.src_port
-        seq = 1
-        ack = 1
+        seq = packet.seq_num
+        ack = 1 + packet.seq_num
+	print "seq"
+	print ack
         res_off = 5 << 4
         flag = 20
         window = 1
         urgent_pointer = 0
         check_sum = 0
         tcp_header = struct.pack("!HHLLBBHHH", source, dest, seq, ack, res_off, flag, window, check_sum, urgent_pointer)
-        check_sum = self.checksum_calc(tcp_header, 20)
+        
+        psuedo_header = struct.pack("!LLBBH", packet.dest_ip, packet.src_ip, 0, 6, 20)
+        check_header = psuedo_header + tcp_header
+        check_sum = self.checksum_calc(check_header, 32)
         tcp_header = struct.pack("!HHLLBBHHH", source, dest, seq, ack, res_off, flag, window, check_sum, urgent_pointer)
         return tcp_header
 
