@@ -25,21 +25,32 @@ class Firewall:
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
         packet = self.packet_service.data_to_packet(pkt, pkt_dir)
+
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
         #print packet.http_contents == ""
+
         if verdict == "pass":
             self.send_pkt(pkt_dir, pkt)
-        elif verdict == "deny":
-            ## ADD rule about syn
-            rst_pkt = self.packet_service.packet_to_data(packet)
-            self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
-        elif verdict == "log":
             #if its not the right seq number, drop it
             #if it is an unmatching response, drop it
             #else, send it
             #log i
-            print packet.http_contents, "THESE ARE THE CONTENTS"
-            pass
+            if pkt_dir == PKT_DIR_INCOMING:
+                ext_port = packet.src_port
+            else:
+                ext_port = packet.dst_port
+
+            log_contents = None
+            if (packet.protocol == "tcp") and (ext_port == 80):
+                log_contents = log_handler.handle_log(packet, pkt_dir)
+            if log_contents != None:
+                fw_rules.check_http(packet)
+        elif verdict == "deny":
+            ## ADD rule about syn
+            rst_pkt = self.packet_service.packet_to_data(packet)
+            self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
+            return
+
         else:
             print verdict
             self.send_pkt(pkt_dir, pkt)

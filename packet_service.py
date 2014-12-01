@@ -12,7 +12,7 @@ class Packet_Service(object):
         proto = packet.protocol
         if str.lower(proto) == "tcp":
             print len(total_pkt)
-            total_pkt = self.craft_ip(packet, 40)
+            total_pkt = self.craft_ip(packet, 20)
             total_pkt += self.craft_tcp(packet)
             print len(total_pkt)
             print repr(total_pkt)
