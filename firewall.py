@@ -30,7 +30,7 @@ class Firewall:
         #print packet.http_contents == ""
 
         if verdict == "pass":
-            #self.send_pkt(pkt_dir, pkt)
+            self.send_pkt(pkt_dir, pkt)
             #if its not the right seq number, drop it
             #if it is an unmatching response, drop it
             #else, send it
@@ -53,7 +53,7 @@ class Firewall:
 
         else:
             print verdict
-            #self.send_pkt(pkt_dir, pkt)
+            self.send_pkt(pkt_dir, pkt)
         return
 
 
