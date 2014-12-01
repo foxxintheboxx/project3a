@@ -23,8 +23,8 @@ class Packet(object):
 
         self.dir = None
 
+        self.http_contents_string = ""
         self.http_contents = None
-        self.http_host = None
 
         #DNS FIELDS
         self.dns_query = None

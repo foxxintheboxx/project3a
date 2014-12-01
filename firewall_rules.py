@@ -20,14 +20,12 @@ class FireWall_Rules(object):
         ext_ip = None
         verdict = "drop"
         if pkt == PKT_DIR_OUTGOING:
-            ext_port = pkt.dest_ip
-            ext_ip = pkt.dst_port
+            ext_port = pkt.dest_port
+            ext_ip = pkt.dst_ip
         else: 
             ext_port = pkt.src_port
             ext_ip = pkt.src_ip
 
-        if pkt.protocol == "icmp":
-            ext_port = pkt.type
         if pkt.protocol not in self.rule_dictionary:
             return "pass"
         rule_list = self.rule_dictionary[pkt.protocol]
@@ -49,6 +47,17 @@ class FireWall_Rules(object):
         return verdict
 
 
+    def check_http(self, packet_class):
+        packet_http = packet_class.http_contents
+        #pull out the http contents class
+        packet_hostname = packet_http.hostname
+        #pull out the httpcontents.hostname
+        #check the hostname against the rules we have
+        for rule in self.rule_dictionary["http"]:
+            if rule.check_http_rule(packet_hostname):
+                http_contents.writeback()
+                break
+        #if it passes, call the http_contents.writeback method
 
     # TODO: Also do some initialization if needed.
     #function to initialize the rules dictionary
@@ -73,6 +82,10 @@ class FireWall_Rules(object):
                 rule = self.DNS_Rule()
                 rule.verdict = elements[0].lower()
                 rule.dns_query = elements[2].split(".")
+            elif protocol == "http":
+                rule = self.HTTP_Rule(elements[2].lower())
+                self.set_verdict("log")
+                self.set
             else:
                 rule = self.Rule(protocol)
                 rule.set_verdict(elements[0].lower())
@@ -84,6 +97,24 @@ class FireWall_Rules(object):
             ret_dict[protocol].append(rule)
 
         return ret_dict
+
+    class HTTP_Rule(object):
+        def __init__(self, hostname):
+            self.hostname = hostname
+        def check_http_rule(self, pkt_hostname):
+            rev_hostname = pkt_hostname[::-1]
+            self_hostname = self.hostname[::-1]
+            index = 0
+            for el in rev_pkt_dns:
+                if index < len(self_hostname) and el == self_hostname[index]:
+                    index += 1
+                    continue
+                elif index < len(self_hostname) and self_hostname[index] == "*":
+                    break
+                else:
+                    return False
+            return True
+
     class DNS_Rule(object):
         def __init__(self):
             self.verdict = None
@@ -105,6 +136,19 @@ class FireWall_Rules(object):
                     return False
             return True
 
+def check_dns_query(pkt_dns, dns_queryy):
+    rev_pkt_dns = pkt_dns[::-1]
+    dns_query = dns_queryy[::-1]
+    index = 0
+    for el in rev_pkt_dns:
+        if index < len(dns_query) and el == dns_query[index]:
+            index += 1
+            continue
+        elif index < len(dns_query) and dns_query[index] == "*":
+            break
+        else:
+            return False
+    return True
     class Rule(object):
         def __init__(self, protocol):
             self.parent = None

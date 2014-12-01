@@ -70,8 +70,7 @@ class Packet_Service(object):
                     print "total-size: ", packet0.total_length
                     print start_trans_header, "trans header <<__"
                     print http_offset, "http offsettttt << --"
-                    packet0.http_contents = self.get_http_contents(pkt, start_trans_header + http_offset)
-                    packet0.http_host = self.get_http_host(packet0)
+                    packet0.http_contents_string = self.get_http_contents(pkt, start_trans_header + http_offset)
 
             except Exception as e:
                 print e
