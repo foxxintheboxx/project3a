@@ -154,6 +154,7 @@ class Log_Handler(object):
 
 		for line in lines:
 			response_line = line.split(" ")
+			print "!!!!!!", response_line
 			if response_line == " ":
 				break
 			elif response_line[0] == http_contents.version:
