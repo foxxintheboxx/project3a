@@ -50,7 +50,6 @@ class Firewall:
             rst_pkt = self.packet_service.packet_to_data(packet)
             self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
             return
-
         else:
             print verdict
             self.send_pkt(pkt_dir, pkt)

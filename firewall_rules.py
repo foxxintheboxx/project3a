@@ -2,7 +2,6 @@ from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 class FireWall_Rules(object):
 
     def __init__(self, rules_str):
-
         self.rule_dictionary = self.ingest_rules(rules_str)
         for key, rules in self.rule_dictionary.iteritems():
             for rule in rules:
@@ -55,7 +54,8 @@ class FireWall_Rules(object):
         #check the hostname against the rules we have
         for rule in self.rule_dictionary["http"]:
             if rule.check_http_rule(packet_hostname):
-                packt_http.writeback()
+                print "host passed: ", packet_hostname
+                packet_http.writeback()
                 break
         #if it passes, call the http_contents.writeback method
 

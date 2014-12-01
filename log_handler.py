@@ -56,8 +56,6 @@ class Log_Handler(object):
 						self.current_request.append(request_line)
 
 
-
-
 	#should only handle actual tcp packets, if direction is incoming it must be a response vise versa
 	#responses should only be passed through if we have a request for it
 	#sequence number should be checked before handle_log is called
@@ -66,11 +64,13 @@ class Log_Handler(object):
 		#if outgoing --> request
 
 		if direction == PKT_DIR_OUTGOING:
-			key = (pkt.destination_ip, pkt.src_port)
+			key = (pkt.dest_ip, pkt.src_port)
 
+			#if its a new request
 			if key not in self.log_dict:
 				buff = self.Log_Buffer()
 				buff.key = key
+				self.log_dict[key] = buff
 			else:	
 				buff = self.log_dict[key]
 
@@ -79,7 +79,7 @@ class Log_Handler(object):
 			buff.current_request_index = pkt.seq_num
 
 		else:
-			key = (source_ip, dest_port)
+			key = (pkt.src_ip, pkt.dst_port)
 
 			if key not in self.log_dict:
 				print "i think something went awry"
@@ -112,6 +112,8 @@ class Log_Handler(object):
 		self.partial_request_indexes.pop(key)
 
 	#to write things back to the log once everthing is done
+	#return the same packet with changed contents
+	#called by
 	def write_back(self, key, pkt):
 		log_buff = log_dict.pop(key)
 		partial_http_contents = self.parse_request(log_buff.current_request)
