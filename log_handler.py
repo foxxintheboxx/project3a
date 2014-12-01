@@ -34,7 +34,7 @@ class Log_Handler(object):
 			key = (pkt.destination_ip, pkt.src_port)
 
 			if key not in self.log_dict:
-				buff = Log_Buffer()
+				buff = self.Log_Buffer()
 				buff.key = key
 
 
