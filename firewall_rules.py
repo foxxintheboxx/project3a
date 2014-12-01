@@ -136,19 +136,6 @@ class FireWall_Rules(object):
                     return False
             return True
 
-def check_dns_query(pkt_dns, dns_queryy):
-    rev_pkt_dns = pkt_dns[::-1]
-    dns_query = dns_queryy[::-1]
-    index = 0
-    for el in rev_pkt_dns:
-        if index < len(dns_query) and el == dns_query[index]:
-            index += 1
-            continue
-        elif index < len(dns_query) and dns_query[index] == "*":
-            break
-        else:
-            return False
-    return True
     class Rule(object):
         def __init__(self, protocol):
             self.parent = None

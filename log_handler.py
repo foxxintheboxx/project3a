@@ -36,7 +36,7 @@ class Log_Handler(object):
 				if self.response_complete:
 					pass
 				else:
-					if response_line = "":
+					if response_line == "":
 						self.response_complete = True
 						return_value = True
 					else:
@@ -50,7 +50,7 @@ class Log_Handler(object):
 				if self.request_complete:
 					pass
 				else:
-					if resquest_line = "":
+					if request_line == "":
 						self.request_complete = True
 					else:
 						self.current_request.append(request_line)
@@ -83,7 +83,6 @@ class Log_Handler(object):
 
 			if key not in self.log_dict:
 				print "i think something went awry"
-				continue
 			else:
 				buff = self.log_dict[key]
 
