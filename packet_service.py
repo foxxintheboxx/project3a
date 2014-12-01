@@ -11,11 +11,8 @@ class Packet_Service(object):
         total_pkt = ""
         proto = packet.protocol
         if str.lower(proto) == "tcp":
-            print len(total_pkt)
             total_pkt = self.craft_ip(packet, 20)
             total_pkt += self.craft_tcp(packet)
-            print len(total_pkt)
-            print repr(total_pkt)
         elif proto == "udp":
             if packet.is_DNS == False:
                 print "BAD RECONTSTRUCT"
@@ -52,8 +49,6 @@ class Packet_Service(object):
                 flags = self.get_tcp_flags(pkt, start_trans_header)
                 packet0.syn = ((flags & 0x02) >> 1) == 1
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
-                print "printing src port"
-                print packet0.src_port
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
                 packet0.seq_num = self.seq_number(pkt, start_trans_header)
 
@@ -74,7 +69,6 @@ class Packet_Service(object):
         elif packet0.protocol == "udp":
             try:
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
-                print packet0.src_port
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
             except:
                 print "failed src_port"
@@ -82,9 +76,7 @@ class Packet_Service(object):
             if pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 53:
                 try:
                     result = self.parse_dns(pkt, start_trans_header + 8)
-                    print "result"
                     if result != None and result != -1:
-                        print "a"
                         packet0.dns_id = result[0]
                         packet0.dns_opcode_plus = result[1]
                         packet0.dns_query = result[2]
@@ -135,8 +127,6 @@ class Packet_Service(object):
     def seq_number(self, pkt, offset):
         seq_byte = pkt[offset + 4: offset + 8]
         unpacked_byte = struct.unpack("!L", seq_byte)[0]
-	print "getting seq"
-	print unpacked_byte
         return unpacked_byte
 
     def total_length(self, pkt):
@@ -208,9 +198,7 @@ class Packet_Service(object):
     def parse_dns(self, pkt, offset):
         response = ["ID", "OPCODE", "QUERY", "QUESTION", "QNAME_BYTE"]
         dns_header = pkt[offset:offset+12]
-        print "1"
         response[0] = self.dns_id(dns_header)
-        print "1.01"
         response[1] = self.dns_opcode_plus(dns_header)
         qd_count_byte = dns_header[4:6]
         qd_count = struct.unpack("!H", qd_count_byte)[0]
@@ -224,7 +212,6 @@ class Packet_Service(object):
         qname_end = 0
         byte_val = struct.unpack("!B", question[qname_end])[0]
         q_name = []
-        print "2"
         while byte_val != 0x00:
             length = byte_val
             string = ""
@@ -237,14 +224,12 @@ class Packet_Service(object):
 
             q_name.append(string)
             byte_val = struct.unpack("!B", question[qname_end])[0]
-        print "3"
         qname_byte = question[0: qname_end + 1]
         q_type_byte = question[qname_end + 1 : qname_end + 3]
         q_class_byte = question[qname_end + 3: qname_end + 5]
 
         q_type = struct.unpack("!H", q_type_byte)[0]
         q_class = struct.unpack("!H", q_class_byte)[0]
-	print "4"
         ##I eliminated QTYPE == 28 (AAAA) 
         if q_type == 28:
             # some flag to indicate to drop because otherwise it would think it is just udp
@@ -255,7 +240,6 @@ class Packet_Service(object):
             return None
         response[2] = q_name
         response[4] = qname_byte
-        print "5"
         return response
 
     def dns_id(self, dns_header):
@@ -275,8 +259,6 @@ class Packet_Service(object):
         dest = packet.src_port
         seq = packet.seq_num
         ack = 1 + packet.seq_num
-	print "seq"
-	print ack
         res_off = 5 << 4
         flag = 20
         window = 1
@@ -313,11 +295,7 @@ class Packet_Service(object):
 
     def craft_dns_header(self, packet):
         _id = packet.dns_id
-        print "id"
-        print _id
         opcode_plus = 1
-        print "opcode plus"
-        print opcode_plus
         rcode_plus = 0
         qd_count = 1
         ancount = 1

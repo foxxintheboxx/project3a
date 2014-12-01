@@ -30,6 +30,7 @@ class Firewall:
         #print packet.http_contents == ""
 
         if verdict == "pass":
+            print "sending here!!"
             self.send_pkt(pkt_dir, pkt)
             #if its not the right seq number, drop it
             #if it is an unmatching response, drop it
@@ -42,9 +43,13 @@ class Firewall:
 
             log_contents = None
             if (packet.protocol == "tcp") and (ext_port == 80):
-                log_contents = log_handler.handle_log(packet, pkt_dir)
+                if packet.http_contents_string== "":
+                    print "http ack"
+                else:
+                    print "got in hereeee"
+                    log_contents = self.log_handler.handle_log(packet, pkt_dir)
             if log_contents != None:
-                fw_rules.check_http(packet)
+                self.fw_rules.check_http(packet)
         elif verdict == "deny":
             ## ADD rule about syn
             rst_pkt = self.packet_service.packet_to_data(packet)

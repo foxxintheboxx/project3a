@@ -106,7 +106,7 @@ class FireWall_Rules(object):
             rev_hostname = pkt_hostname[::-1]
             self_hostname = self.hostname[::-1]
             index = 0
-            for el in rev_pkt_dns:
+            for el in rev_hostname:
                 if index < len(self_hostname) and el == self_hostname[index]:
                     index += 1
                     continue

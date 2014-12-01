@@ -9,7 +9,7 @@ class Log_Handler(object):
 		self.log_dict = {}
 
 	class Log_Buffer():
-		def __init__():
+		def __init__(self):
 			self.key = None
 
 			self.current_request = []
@@ -83,13 +83,12 @@ class Log_Handler(object):
 
 			if key not in self.log_dict:
 				print "i think something went awry"
-			else:
-				buff = self.log_dict[key]
+			buff = self.log_dict[key]
 
-			http_complete = buff.handle_response(plt.http_contents_string)
+			http_complete = buff.handle_response(pkt.http_contents_string)
 			buff.current_response_index = pkt.seq_num
-			if http_compete:
-				packet = self.writeback(key, pkt)
+			if http_complete:
+				packet = self.complete_http(key, pkt)
 				print "Completed HTTP Piece!"
 				return packet
 
@@ -114,8 +113,8 @@ class Log_Handler(object):
 	#to write things back to the log once everthing is done
 	#return the same packet with changed contents
 	#called by
-	def write_back(self, key, pkt):
-		log_buff = log_dict.pop(key)
+	def complete_http(self, key, pkt):
+		log_buff = self.log_dict.pop(key)
 		partial_http_contents = self.parse_request(log_buff.current_request)
 		http_contents = self.parse_response(log_buff.current_response, partial_http_contents)
 		pkt.http_contents = http_contents
@@ -154,7 +153,7 @@ class Log_Handler(object):
 		lines = current_response
 
 		for line in lines:
-			response_line = lines.split(" ")
+			response_line = line.split(" ")
 			if response_line == " ":
 				break
 			elif response_line[0] == http_contents.version:
