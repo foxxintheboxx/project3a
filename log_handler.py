@@ -222,7 +222,17 @@ class Log_Handler(object):
 
 		def writeback(self):
 			f = open("http.log","w")
-			f.write(self.hostname + " " + self.method + " " + self.path + " " + self.version + " " + self.statuscode + " " + self.object_size)
+			f.write(self.hostname)
+            f.write(" ")
+            f.write(self.method)
+            f.write(" ") 
+            f.write(self.path)
+            f.write(" ")
+            f.write(self.version)
+            f.write(" ")
+            f.write(self.statuscode)
+            f.write(" ")
+            f.write(self.object_size)
 
 log_handler = Log_Handler()
 request = "GET / HTTP/1.1\nHost: google.com\nUser-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/\nAccept-Encoding: gzip\nAccept-Charset: ISO-8859-1,UTF-8;q=0.7,*;q=0.7\nCache-Control: no-cache\nAccept-Language: de,en;q=0.7,en-us;q=0.3 \n \n"
