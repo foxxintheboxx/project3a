@@ -61,10 +61,6 @@ class Packet_Service(object):
                 if (pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 80) or (pkt_dir == PKT_DIR_INCOMING and packet0.src_port == 80):
                     http_offset = 4*int(self.get_end_tcp(pkt,start_trans_header))
                     
-                    if pkt_dir == PKT_DIR_OUTGOING:
-                        print "outgoing"
-                    else:
-                        print "incoming"
                     print "srcport: ", packet0.src_port
                     print "dstport: ", packet0.dst_port
                     print "total-size: ", packet0.total_length

@@ -48,6 +48,7 @@ class FireWall_Rules(object):
 
     def check_http(self, packet_class):
         packet_http = packet_class.http_contents
+        print "checking http"
         #pull out the http contents class
         packet_hostname = packet_http.hostname
         #pull out the httpcontents.hostname
