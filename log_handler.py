@@ -6,26 +6,61 @@ class Log_Handler(object):
 
 	#will take in a list of lines for the rules
 	def __init__(self):
-		self.partial_requests = {}
-		self.partial_request_indexes = {}
-		self.current_requests = {}
-		self.partial_responses = {}
-		self.partial_responses_indexes = {}
-
 		self.log_dict = {}
 
 	class Log_Buffer():
 		def __init__():
 			self.key = None
-			self.current_request = None
-			self.current_response = None
+
+			self.current_request = []
+			self.current_response = []
+
 			self.current_request_index = None
 			self.current_response_index = None
+
+			self.request_buffer = ""
+			self.response_buffer = ""
+
+			self.request_complete = False
+			self.response_complete = False
+
+		#purpose is because you do not want to buffer the whole response body if you already have all the header fields you need
+		#so you should continue to get the buffer, until you reach a new line
+		#once you reach a new line, then the header is complete
+		#so you change that field, you will continue to buffer partial headers until you reach the end of the body
+		def handle_response(self, partial_response_string):
+			index = 0
+			response_lines = partial_response_string.lower().split("\n")
+			return_value = False
+			for response_line in response_lines:
+				if self.response_complete:
+					pass
+				else:
+					if response_line = "":
+						self.response_complete = True
+						return_value = True
+					else:
+						self.current_response.append(response_line)
+
+			return return_value
+
+		def handle_request(self, partial_request_string):
+			request_lines = partial_request_string.lower().split("\n")
+			for request_line in request_lines:
+				if self.request_complete:
+					pass
+				else:
+					if resquest_line = "":
+						self.request_complete = True
+					else:
+						self.current_request.append(request_line)
+
 
 
 
 	#should only handle actual tcp packets, if direction is incoming it must be a response vise versa
 	#responses should only be passed through if we have a request for it
+	#sequence number should be checked before handle_log is called
 	def handle_log(self, pkt, direction):
 
 		#if outgoing --> request
@@ -36,35 +71,32 @@ class Log_Handler(object):
 			if key not in self.log_dict:
 				buff = self.Log_Buffer()
 				buff.key = key
+			else:	
+				buff = self.log_dict[key]
 
+			buff.handle_request(pkt.http_contents_string)
 
+			buff.current_request_index = pkt.seq_num
 
-			if key in self.log_dict:
-				self.partial_request_indexes[key] += 1 
-				self.partial_requests[key] += pkt.http_contents_string
-			else:
-				self.partial_request_indexes[key] = pkt.seq_num
-				self.partial_requests[key] = pkt.http_contents_string
-
-			if self.is_complete(self.partial_requests[key]):
-				self.promote_request(key)
-
-			#see if its in the request builder dictionary
-		#if incoming --> response
-		elif direction == PKT_DIR_INCOMING:
+		else:
 			key = (source_ip, dest_port)
 
-			if key in self.partial_responses:
-				self.partial_responses_indexes[key] += 1
-				self.partial_responses[key] += pkt.http_contents_string
+			if key not in self.log_dict:
+				print "i think something went awry"
+				continue
 			else:
-				self.partial_responses_indexes[key] = pkt.seq_num
-				self.partial_responses[key] = pkt.http_contents_string
+				buff = self.log_dict[key]
 
-			if self.is_complete(self.partial_responses[key]):
-				self.write_back(key)
-			#check to see if it is the current requests
-			#
+			http_complete = buff.handle_response(plt.http_contents_string)
+			buff.current_response_index = pkt.seq_num
+			if http_compete:
+				packet = self.writeback(key, pkt)
+				print "Completed HTTP Piece!"
+				return packet
+
+		return None
+
+
 
 	#to be called outside log handler to tell whether a response should be passed through or dropped
 	#!! dont think should be used
@@ -81,26 +113,26 @@ class Log_Handler(object):
 		self.partial_request_indexes.pop(key)
 
 	#to write things back to the log once everthing is done
-	def write_back(key):
-		partial_http_contents = self.current_requests.pop(key) 
-		response_string = self.partial_responses.pop(key)
-		whole_http_contents = self.parse_response(response_string, partial_http_contents)
+	def write_back(self, key, pkt):
+		log_buff = log_dict.pop(key)
+		partial_http_contents = self.parse_request(log_buff.current_request)
+		http_contents = self.parse_response(log_buff.current_response, partial_http_contents)
+		pkt.http_contents = http_contents
 
-		self.partial_responses_indexes.pop(key)
+		return pkt
 
 	#to be called outside log handler to figure whether the packet should be passed or dropped
 	def get_expected_request_index(self, dest_ip, source_port):
 		key = (dest_ip, source_port)
-		return self.partial_request_indexes[key] + 1
+		return self.log_dict[key].current_request_index + 1
 
 	def get_expected_response_index(self, src_ip, destination_port):
 		key = (src_ip, destination_port)
-		return self.partial_responses_indexes[key] + 1
+		return self.log_dict[key].current_response_index + 1
 
 
-	def parse_request(self, http_string):
-		lines = http_string.lower().split("\n")
-		line_num = 0
+	def parse_request(self, current_request):
+		lines = current_request
 		contents = self.Http_Contents()
 
 		request_line = lines.pop(0).split(" ")
@@ -117,9 +149,8 @@ class Log_Handler(object):
 
 		return contents 
 
-	def parse_response(self, http_string, http_contents):
-		lines = http_string.lower().split("\n")
-		line_num = 0
+	def parse_response(self, current_response, http_contents):
+		lines = current_response
 
 		for line in lines:
 			response_line = lines.split(" ")
@@ -130,7 +161,7 @@ class Log_Handler(object):
 			elif response_line[0] == "content-length":
 				http_contents.object_size = response_line[1]
 
-		return 
+		return http_contents
 
 
 

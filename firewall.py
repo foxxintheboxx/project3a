@@ -41,7 +41,7 @@ class Firewall:
                 ext_port = packet.dst_port
 
             log_contents = None
-            if (packet.proto == "tcp") and (ext_port == 80):
+            if (packet.protocol == "tcp") and (ext_port == 80):
                 log_contents = log_handler.handle_log(packet, pkt_dir)
             if log_contents != None:
                 fw_rules.check_http(packet)

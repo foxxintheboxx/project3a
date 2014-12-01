@@ -55,7 +55,7 @@ class FireWall_Rules(object):
         #check the hostname against the rules we have
         for rule in self.rule_dictionary["http"]:
             if rule.check_http_rule(packet_hostname):
-                http_contents.writeback()
+                packt_http.writeback()
                 break
         #if it passes, call the http_contents.writeback method
 
@@ -84,8 +84,7 @@ class FireWall_Rules(object):
                 rule.dns_query = elements[2].split(".")
             elif protocol == "http":
                 rule = self.HTTP_Rule(elements[2].lower())
-                self.set_verdict("log")
-                self.set
+
             else:
                 rule = self.Rule(protocol)
                 rule.set_verdict(elements[0].lower())
@@ -101,6 +100,7 @@ class FireWall_Rules(object):
     class HTTP_Rule(object):
         def __init__(self, hostname):
             self.hostname = hostname
+            
         def check_http_rule(self, pkt_hostname):
             rev_hostname = pkt_hostname[::-1]
             self_hostname = self.hostname[::-1]
