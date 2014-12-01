@@ -38,7 +38,7 @@ class Firewall:
             if pkt_dir == PKT_DIR_INCOMING:
                 ext_port = packet.src_port
             else:
-                ext_port = packet.dest_port
+                ext_port = packet.dst_port
 
             log_contents = None
             if (packet.proto == "tcp") and (ext_port == 80):
