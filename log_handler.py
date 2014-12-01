@@ -33,6 +33,12 @@ class Log_Handler(object):
 		if direction == PKT_DIR_OUTGOING:
 			key = (pkt.destination_ip, pkt.src_port)
 
+			if key not in self.log_dict:
+				buff = Log_Buffer()
+				buff.key = key
+
+
+
 			if key in self.log_dict:
 				self.partial_request_indexes[key] += 1 
 				self.partial_requests[key] += pkt.http_contents_string
@@ -184,8 +190,8 @@ class Log_Handler(object):
 			print "object_size: ", self.object_size
 
 		def writeback(self):
-			file f as open("http.log","w"):
-				f.write(self.hostname + " " + self.method + " " + self.path + " " + self.version + " " + self.statuscode + " " + self.object_size)
+			f = open("http.log","w")
+			f.write(self.hostname + " " + self.method + " " + self.path + " " + self.version + " " + self.statuscode + " " + self.object_size)
 
 log_handler = Log_Handler()
 request = "GET / HTTP/1.1\nHost: google.com\nUser-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/\nAccept-Encoding: gzip\nAccept-Charset: ISO-8859-1,UTF-8;q=0.7,*;q=0.7\nCache-Control: no-cache\nAccept-Language: de,en;q=0.7,en-us;q=0.3 \n \n"
