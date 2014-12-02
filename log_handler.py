@@ -30,7 +30,7 @@ class Log_Handler(object):
 		#so you change that field, you will continue to buffer partial headers until you reach the end of the body
 		def handle_response(self, partial_response_string):
 			index = 0
-			response_lines = partial_response_string.lower().split("\n")
+			response_lines = partial_response_string.lower().split("\r\n")
 			return_value = False
 			for response_line in response_lines:
 				if self.response_complete:
@@ -45,7 +45,7 @@ class Log_Handler(object):
 			return return_value
 
 		def handle_request(self, partial_request_string):
-			request_lines = partial_request_string.lower().split("\n")
+			request_lines = partial_request_string.lower().split("\r\n")
 			for request_line in request_lines:
 				if self.request_complete:
 					pass
@@ -83,6 +83,7 @@ class Log_Handler(object):
 
 			if key not in self.log_dict:
 				print "i think something went awry"
+				return None
 			buff = self.log_dict[key]
 
 			http_complete = buff.handle_response(pkt.http_contents_string)
@@ -159,7 +160,7 @@ class Log_Handler(object):
 				break
 			elif response_line[0] == http_contents.version:
 				http_contents.statuscode = response_line[1]
-			elif response_line[0] == "content-length":
+			elif response_line[0] == "content-length:":
 				http_contents.object_size = response_line[1]
 
 		return http_contents
@@ -203,7 +204,7 @@ class Log_Handler(object):
 			self.path = None
 			self.version = None
 			self.statuscode = None
-			self.object_size = -1 
+			self.object_size = "-1" 
 
 
 		def to_string(self):
@@ -215,18 +216,19 @@ class Log_Handler(object):
 			print "object_size: ", self.object_size
 
 		def writeback(self):
-			f = open("http.log","w")
-			f.write(self.hostname)
-			f.write(" ")
-			f.write(self.method)
-			f.write(" ") 
-			f.write(self.path)
-			f.write(" ")
-			f.write(self.version)
-			f.write(" ")
-			f.write(self.statuscode)
-			f.write(" ")
-			f.write(self.object_size)
+			with open("http.log", "a") as f:
+				f.write(self.hostname)
+				f.write(" ")
+				f.write(self.method)
+				f.write(" ") 
+				f.write(self.path)
+				f.write(" ")
+				f.write(self.version)
+				f.write(" ")
+				f.write(self.statuscode)
+				f.write(" ")
+				f.write(self.object_size)
+				f.write("\n")
 
 log_handler = Log_Handler()
 request = "GET / HTTP/1.1\nHost: google.com\nUser-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/\nAccept-Encoding: gzip\nAccept-Charset: ISO-8859-1,UTF-8;q=0.7,*;q=0.7\nCache-Control: no-cache\nAccept-Language: de,en;q=0.7,en-us;q=0.3 \n \n"
