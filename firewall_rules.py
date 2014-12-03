@@ -51,8 +51,9 @@ class FireWall_Rules(object):
         packet_http = packet_class.http_contents
         print "checking http"
         #pull out the http contents class
-        if packet_http.hostname == None:
-            packet_http.hostname = int2ip(ext_ip)
+        
+        # if packet_http.hostname == None:
+        #     packet_http.hostname = int2ip(ext_ip)
 
         packet_hostname = packet_http.hostname
         #pull out the httpcontents.hostname

@@ -60,46 +60,33 @@ class Firewall:
                     #create a dictionary entry
                     if packet.ack:
                         self.log_handler.log_dict[key].current_response_index = packet.seq_num + 1
-                        self.log_handler.log_dict[key].init_res = packet.seq_num
-                        self.log_handler.log_dict[key].max_res = packet.seq_num
                     else:
                         print "got the syn!"
                         print "syn number: ", packet.seq_num
                         self.log_handler.create_entry(key, packet)
-
                 else:
-                    
                     
                     #if its empty and not a fin
                     if packet.http_contents_string == "" and not packet.fin:
-                        #then its a regular ack 
                         pass
                     else:
                         #check the sequence number
                         if pkt_dir == PKT_DIR_OUTGOING:
                             print "request packet"
                             expected_sequence = self.log_handler.get_expected_request_index(key)
-                            _max = self.log_handler.get_expected_request_max(key)
-                            _min = self.log_handler.get_expected_request_min(key)
                         else:
                             print "response packet"
-                            print packet.http_contents_string == ""
-                            print packet.fin
-                            if key in self.log_handler.log_dict:
-                                expected_sequence = self.log_handler.get_expected_response_index(key)
-                                _max = self.log_handler.get_expected_response_max(key)
-                                _min = self.log_handler.get_expected_response_min(key)
-                            else:
+                            if key not in self.log_handler.log_dict:
                                 self.send_pkt(pkt_dir, pkt)
                                 return
-                            print "YO"
+                            else:
+                                expected_sequence = self.log_handler.get_expected_response_index(key)
+                                
                         print "packet sequence number: ", packet.seq_num
                         print "expected sequence number: ", expected_sequence
 
                         if expected_sequence != packet.seq_num:
-                            if packet.seq_num > _max:
-                                print "DROPPED SOME OUT OF ORDER SHIT, HELLA PROPERLY"
-                                return
+                            return
                         elif packet.fin and packet.ack:
                             print "got a fin ack!"
                             self.log_handler.remove_entry(key)
