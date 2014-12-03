@@ -7,17 +7,19 @@ class Log_Handler(object):
 	#will take in a list of lines for the rules
 	def __init__(self):
 		self.log_dict = {}
-
 	class Log_Buffer():
 		def __init__(self):
 			self.key = None
 
+			#array of lines of current request
+			#will be complete header when *_complete is true
 			self.current_request = []
 			self.current_response = []
 
 			self.current_request_index = None
 			self.current_response_index = None
 
+			#store the partial lines, before get the entirety of it
 			self.request_buffer = ""
 			self.response_buffer = ""
 
@@ -29,31 +31,44 @@ class Log_Handler(object):
 		#once you reach a new line, then the header is complete
 		#so you change that field, you will continue to buffer partial headers until you reach the end of the body
 		def handle_response(self, partial_response_string):
-			index = 0
-			response_lines = partial_response_string.lower().split("\r\n")
-			return_value = False
-			for response_line in response_lines:
-				if self.response_complete:
-					pass
-				else:
-					if response_line == "":
-						self.response_complete = True
-						return_value = True
-					else:
-						self.current_response.append(response_line)
+			if self.response_complete:
+				return False
 
-			return return_value
+			temp_buff = self.response_buffer + partial_response_string
+			response_lines = partial_response_string.lower().split("\r\n")
+
+			if "\r\n\r\n" in temp_buff:
+				for response_line in response_lines:
+					if self.response_complete:
+						break
+					else:
+						if response_line == "":
+							self.response_complete = True
+						else:
+							self.current_response.append(response_line)
+				return True
+			else:
+				return False
 
 		def handle_request(self, partial_request_string):
-			request_lines = partial_request_string.lower().split("\r\n")
-			for request_line in request_lines:
-				if self.request_complete:
-					pass
-				else:
-					if request_line == "":
-						self.request_complete = True
+			if self.request_complete:
+				return
+
+			temp_buff = self.request_buffer + partial_request_string
+			request_lines = temp_buff.lower().split("\r\n")
+
+			if "\r\n\r\n" in temp_buff:
+				print request_lines
+				for request_line in request_lines:
+					if self.request_complete:
+						break
 					else:
-						self.current_request.append(request_line)
+						if request_line == "":
+							self.request_complete = True
+						else:
+							self.current_request.append(request_line)
+			else:
+				self.request_buffer = temp_buff
 
 
 	#should only handle actual tcp packets, if direction is incoming it must be a response vise versa
