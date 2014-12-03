@@ -26,3 +26,5 @@ coolmath.com get /images/game-logo-crazytaxim12.gif http/1.1 200 1536
 coolmath.com get /images/game-logo-fractone.gif http/1.1 200 1370
 inst.eecs.berkeley.edu get /~cs168/fa14/ http/1.1 200 273
 inst.eecs.berkeley.edu get /~cs168/fa14/content.html http/1.1 200 1569
+inst.eecs.berkeley.edu get /~cs168/fa14/ http/1.1 200 273
+inst.eecs.berkeley.edu get /~cs168/fa14/content.html http/1.1 200 1569

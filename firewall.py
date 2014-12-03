@@ -12,20 +12,20 @@ class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
-        self.packet_service = packet_service.Packet_Service() #parse and constructing
+        self.packet_service = Packet_Service() #parse and constructing
 
         with open(config['rule']) as file:
             rule_content = file.read()
-        fw_rules = firewall_rules.FireWall_Rules(rule_content)
+        fw_rules = FireWall_Rules(rule_content)
 
         self.fw_rules = fw_rules
-        self.log_handler = log_handler.Log_Handler()
+        self.log_handler = Log_Handler()
 
     # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
-        print "\n"
+        # print "\n"
         packet = self.packet_service.data_to_packet(pkt, pkt_dir)
         # number = random.randint(1,6)
         # if number == 3:
@@ -36,7 +36,7 @@ class Firewall:
         #print packet.http_contents == ""
 
         if verdict == "pass":
-            print "packet sending"
+            # print "packet sending"
             #if its not the right seq number, drop it
             #if it is an unmatching response, drop it
             #else, send it
@@ -60,8 +60,8 @@ class Firewall:
                     if packet.ack:
                         self.log_handler.log_dict[key].current_response_index = packet.seq_num + 1
                     else:
-                        print "got the syn!"
-                        print "syn number: ", packet.seq_num
+                        # print "got the syn!"
+                        # print "syn number: ", packet.seq_num
                         self.log_handler.create_entry(key, packet)
                 else:
                     
@@ -71,25 +71,25 @@ class Firewall:
                     else:
                         #check the sequence number
                         if pkt_dir == PKT_DIR_OUTGOING:
-                            print "request packet"
+                            # print "request packet"
                             expected_sequence = self.log_handler.get_expected_request_index(key)
                         else:
-                            print "response packet"
+                            # print "response packet"
                             if key not in self.log_handler.log_dict:
-                                print "XXXXXXXXXX"
+                                # print "XXXXXXXXXX"
                                 self.send_pkt(pkt_dir, pkt)
                                 return
                             else:
                                 expected_sequence = self.log_handler.get_expected_response_index(key)
                                 
-                        print "packet sequence number: ", packet.seq_num
-                        print "expected sequence number: ", expected_sequence
+                        # print "packet sequence number: ", packet.seq_num
+                        # print "expected sequence number: ", expected_sequence
 
                         if expected_sequence != packet.seq_num:
-                            print "something went ARWYYYYYYYYYYYY"
+                            # print "something went ARWYYYYYYYYYYYY"
                             return
                         elif packet.fin and packet.ack:
-                            print "got a fin ack!"
+                            # print "got a fin ack!"
                             self.log_handler.remove_entry(key)
                         else:
                             #got a data packet of some sort
@@ -205,8 +205,7 @@ class Log_Handler(object):
     def handle_log(self, pkt, direction):
 
         #if outgoing --> request
-        for i in self.log_dict:
-            print i
+        
         if direction == PKT_DIR_OUTGOING:
             key = (pkt.dest_ip, pkt.src_port)
 
@@ -230,7 +229,7 @@ class Log_Handler(object):
             buff.max_res = pot_max if (buff.current_response_index < buff.init_res) else buff.current_response_index 
             if http_complete:
                 packet = self.complete_http(key, pkt)
-                print "Completed HTTP Piece!"
+                # print "Completed HTTP Piece!"
                 return packet
 
         return None
@@ -273,10 +272,10 @@ class Log_Handler(object):
         return self.log_dict[key].init_req 
 
     def parse_request(self, current_request):
-        print current_request == ""
+        # print current_request == ""
         lines = current_request
         contents = self.Http_Contents()
-        print current_request
+        # print current_request
         request_line = lines.pop(0).split(" ")
         contents.method = request_line[0]
         contents.path = request_line[1]
@@ -296,10 +295,10 @@ class Log_Handler(object):
 
     def parse_response(self, current_response, http_contents):
         lines = current_response
-        print "LINES ", lines
+        # print "LINES ", lines
         for line in lines:
             response_line = line.split(" ")
-            print "!!!!!!", response_line
+            # print "!!!!!!", response_line
             if response_line == " " or len(response_line) < 2:
                 break
             elif response_line[0] == http_contents.version:
@@ -321,7 +320,7 @@ class Log_Handler(object):
 
 
     def remove_entry(self,key):
-        print "popped the fin"      
+        # print "popped the fin"      
         if self.log_dict[key].seen_finack == 0:
             self.log_dict[key].seen_finack = 1
         else:
@@ -368,12 +367,13 @@ class Log_Handler(object):
 
 
         def to_string(self):
-            print "hostname: ", self.hostname
-            print "method: ", self.method
-            print "path: ", self.path
-            print "version: ", self.version
-            print "statuscode: ", self.statuscode
-            print "object_size: ", self.object_size
+            pass
+            # print "hostname: ", self.hostname
+            # print "method: ", self.method
+            # print "path: ", self.path
+            # priFnt "version: ", self.version
+            # print "statuscode: ", self.statuscode
+            # print "object_size: ", self.object_size
 
         def writeback(self):
             with open("http.log", "a") as f:
@@ -405,7 +405,7 @@ class Packet_Service(object):
             total_pkt += self.craft_tcp(packet)
         elif proto == "udp":
             if packet.is_DNS == False:
-                print "BAD RECONTSTRUCT"
+                # print "BAD RECONTSTRUCT"
                 return None
             total_pkt = self.craft_dns(packet)
             total_pkt =  self.craft_udp(packet, len(total_pkt)) + total_pkt
@@ -413,7 +413,7 @@ class Packet_Service(object):
         return total_pkt
 
     def data_to_packet(self, pkt, pkt_dir):
-        packet0 = packet.Packet()
+        packet0 = Packet()
         header_len = self.ip_header_length(pkt)
         packet0.dir = pkt_dir
         if header_len < 5:
@@ -453,14 +453,14 @@ class Packet_Service(object):
                     packet0.http_contents_string = self.get_http_contents(pkt, start_trans_header + http_offset)
 
             except Exception as e:
-                print e
+                # print e
                 return None
         elif packet0.protocol == "udp":
             try:
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
             except:
-                print "failed src_port"
+                # print "failed src_port"
                 return None
             if pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 53:
                 try:
@@ -482,8 +482,8 @@ class Packet_Service(object):
                    #     print -1
                    #     return None
                 except Exception, e:
-                    print e
-                    print "failed dns parse"
+                    # print e
+                    # print "failed dns parse"
                     return None
         elif packet0.protocol == "icmp":
             try:
@@ -596,7 +596,7 @@ class Packet_Service(object):
 
     def get_http_contents(self, pkt, offset):
         content = pkt[offset:]
-        print "HTTTTTTP CONTENT: "
+        # print "HTTTTTTP CONTENT: "
         #print content
         return content
 
@@ -793,7 +793,7 @@ class FireWall_Rules(object):
 
     def check_http(self, packet_class,ext_ip):
         packet_http = packet_class.http_contents
-        print "checking http"
+        # print "checking http"
         #pull out the http contents class
         
         if packet_http.hostname == None:
@@ -806,7 +806,7 @@ class FireWall_Rules(object):
             return
         for rule in self.rule_dictionary["http"]:
             if rule.check_http_rule(packet_hostname):
-                print "host passed: ", packet_hostname
+                # print "host passed: ", packet_hostname
                 packet_http.writeback()
                 break
         #if it passes, call the http_contents.writeback method
@@ -862,11 +862,10 @@ class FireWall_Rules(object):
                     index += 1
                     continue
                 elif index < len(self_hostname) and self_hostname[index] == "*":
-                    break
+                    return True
                 else:
                     return False
-            return True
-
+            return True if len(dns_query) == len(rev_pkt_dns) else False
     class DNS_Rule(object):
         def __init__(self):
             self.verdict = None
@@ -874,6 +873,7 @@ class FireWall_Rules(object):
             self.protocol = "dns"
             #self.dns_query = ["*", "google", "com"] -> ["com", "google", "www"]
             #pkt_dns = ["www", "google", "com"] -> ["com", "google"]
+        
         def check_dns_query(self, pkt_dns):
             rev_pkt_dns = pkt_dns[::-1]
             dns_query = self.dns_query[::-1]
@@ -883,10 +883,10 @@ class FireWall_Rules(object):
                     index += 1
                     continue
                 elif index < len(dns_query) and dns_query[index] == "*":
-                    break
+                    return True
                 else:
                     return False
-            return True
+            return True if len(dns_query) == len(rev_pkt_dns) else False
 
     class Rule(object):
         def __init__(self, protocol):
