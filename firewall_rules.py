@@ -18,7 +18,7 @@ class FireWall_Rules(object):
         ext_port = None
         ext_ip = None
         verdict = "drop"
-        if pkt == PKT_DIR_OUTGOING:
+        if pkt  == PKT_DIR_OUTGOING:
             ext_port = pkt.dest_port
             ext_ip = pkt.dst_ip
         else: 
@@ -53,6 +53,8 @@ class FireWall_Rules(object):
         packet_hostname = packet_http.hostname
         #pull out the httpcontents.hostname
         #check the hostname against the rules we have
+        if http not in self.rule_dictionary:
+            return
         for rule in self.rule_dictionary["http"]:
             if rule.check_http_rule(packet_hostname):
                 print "host passed: ", packet_hostname

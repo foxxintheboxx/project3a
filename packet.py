@@ -18,6 +18,8 @@ class Packet(object):
         self.trans_length = None 
         self.window = 1 #TCP
         self.syn = False
+        self.fin = False
+        self.ack = False
         self.tcp_header_length = None
 
         self.icmp_type = None 

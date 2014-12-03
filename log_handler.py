@@ -31,15 +31,21 @@ class Log_Handler(object):
 		#once you reach a new line, then the header is complete
 		#so you change that field, you will continue to buffer partial headers until you reach the end of the body
 		def handle_response(self, partial_response_string):
+			#to reset a response buffer on a persistent connection
+			if self.request_complete:
+				self.response_complete = False
+				self.current_response = []
+				self.current_response_index = self.current_request_index
+
 			if self.response_complete:
 				return False
 
 			temp_buff = self.response_buffer + partial_response_string
 			response_lines = partial_response_string.lower().split("\r\n")
-			print "YOOOOO"
 			if "\r\n\r\n" in temp_buff:
 				for response_line in response_lines:
 					if self.response_complete:
+						self.response_buffer = ""
 						break
 					else:
 						if response_line == "":
@@ -51,16 +57,21 @@ class Log_Handler(object):
 				return False
 
 		def handle_request(self, partial_request_string):
+			#to reset a request buffer on a persisten connection
+			if self.response_complete:
+				self.request_complete = False
+				self.current_request = []
+				self.current_request_index = self.current_response_index
+
 			if self.request_complete:
 				return
 
 			temp_buff = self.request_buffer + partial_request_string
 			request_lines = temp_buff.lower().split("\r\n")
-			print "YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
 			if "\r\n\r\n" in temp_buff:
-				print request_lines
 				for request_line in request_lines:
 					if self.request_complete:
+						self.current_request = ""
 						break
 					else:
 						if request_line == "":
@@ -82,12 +93,7 @@ class Log_Handler(object):
 			key = (pkt.dest_ip, pkt.src_port)
 
 			#if its a new request
-			if key not in self.log_dict:
-				buff = self.Log_Buffer()
-				buff.key = key
-				self.log_dict[key] = buff
-			else:	
-				buff = self.log_dict[key]
+			buff = self.log_dict[key]
 
 			buff.handle_request(pkt.http_contents_string)
 
@@ -97,9 +103,6 @@ class Log_Handler(object):
 		else:
 			key = (pkt.src_ip, pkt.dst_port)
 
-			if key not in self.log_dict:
-				print "i think something went awry"
-				return None
 			buff = self.log_dict[key]
 
 			http_complete = buff.handle_response(pkt.http_contents_string)
@@ -119,32 +122,20 @@ class Log_Handler(object):
 		key = (source_ip, source_port)
 		return key in self.current_requests
 
-	#promote a complete request
-	def promote_request(self, key):
-		request_string = self.partial_requests.pop(key)
-		partial_http_contents = self.parse_request(request_string)
-		self.current_requests[key] = partial_http_contents
-
-		self.partial_request_indexes.pop(key)
-
 	#to write things back to the log once everthing is done
 	#return the same packet with changed contents
 	#called by
 	def complete_http(self, key, pkt):
-		log_buff = self.log_dict.pop(key)
 		partial_http_contents = self.parse_request(log_buff.current_request)
 		http_contents = self.parse_response(log_buff.current_response, partial_http_contents)
 		pkt.http_contents = http_contents
-
 		return pkt
 
 	#to be called outside log handler to figure whether the packet should be passed or dropped
-	def get_expected_request_index(self, dest_ip, source_port):
-		key = (dest_ip, source_port)
+	def get_expected_request_index(self, key):
 		return self.log_dict[key].current_request_index + 1
 
-	def get_expected_response_index(self, src_ip, destination_port):
-		key = (src_ip, destination_port)
+	def get_expected_response_index(self, key):
 		return self.log_dict[key].current_response_index + 1
 
 
@@ -181,7 +172,18 @@ class Log_Handler(object):
 
 		return http_contents
 
+	def create_entry(self,key,pkt):
+		#create 
+		buff = self.Log_Buffer()
+		buff.key = key
+		self.log_dict[key] = buff
+		buff.current_request_index = pkt.seq_num
 
+
+
+	def remove_entry(self,key):
+		print "popped the fin"
+		self.log_dict.pop(key)
 
 	#@param http_string should be the request string and response string concantenated together
 	#@return an HTTP Contents instance

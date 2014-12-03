@@ -48,6 +48,8 @@ class Packet_Service(object):
             try:
                 flags = self.get_tcp_flags(pkt, start_trans_header)
                 packet0.syn = ((flags & 0x02) >> 1) == 1
+                packet0.fin = ((flags & 0x01) == 1)
+                packet0.ack = ((flags & 0x10) > 1)
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
                 packet0.seq_num = self.seq_number(pkt, start_trans_header)
@@ -156,6 +158,21 @@ class Packet_Service(object):
         unpacked_byte = struct.unpack("!B", offset_byte)[0]
         offset_nybble = unpacked_byte & 0xF0
         return (offset_nybble>>4)
+
+    def get_syn_flag(self, pkt, ip_offset):
+        offset_byte = pkt[offset+13:offset+14]
+        unpacked_byte = struct.unpack("!B", offset_byte)[0]
+        if (unpacked_byte & 2) > 0:
+            return True
+        else:
+            return False
+    def get_fin_flag(self, pkt, ip_offset):
+        offset_byte = pkt[offset+13 : offset+14]
+        unpacked_byte = struct.unpack("!B", offset_byte)[0]
+        if (unpacked_byte & 1) > 0:
+            return True
+        else:
+            return False
 
     #get icmp type -- firsty byte of icmp header
     def get_icmp_type(self, pkt, offset):

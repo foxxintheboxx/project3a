@@ -42,33 +42,47 @@ class Firewall:
             else:
                 ext_port = packet.dst_port
 
-            log_contents = None
             if (packet.protocol == "tcp") and (ext_port == 80):
-                if packet.http_contents_string== "":
-                    print "http ack"
+
+                if pkt_dir == PKT_DIR_OUTGOING:
+                    int_port = packet.src_port
+                    ext_ip = packet.dest_ip
                 else:
-                    print "got in hereeee"
+                    int_port = packet.dst_port
+                    ext_ip = packet.src_ip
+                key = (int_port, ext_ip)
+
+                if packet.syn:
+                    #create a dictionary entry
+                    print "got the syn!"
+                    self.log_handler.create_entry(key, packet)
+                else:
+                    #check the sequence number
                     if pkt_dir == PKT_DIR_OUTGOING:
-                        int_port = packet.src_port
-                        ext_ip = packet.dest_ip
-                        key = (int_port, ext_ip)
-                        #print "current non-ack packet sequence number:", self.log_handler.handle_log("")
+                        expected_sequence = self.log_handler.get_expected_request_index(key)
                     else:
-                        int_port = packet.dst_port
-                        ext_ip = packet.src_ip
-                        key = (int_port, ext_ip)
-                        #print "current non-ack packet sequence number:", self.log_handler.handle_log("")
+                        expected_sequence = self.log_handler.get_expected_response_index(key)
                     
-                    log_contents = self.log_handler.handle_log(packet, pkt_dir)
-            if log_contents != None:
-                self.fw_rules.check_http(packet)
+                    #if its empty and not a fin
+                    if packet.http_contents_string == "" and not packet.fin:
+                        #then its a regular ack 
+                        pass
+                    else:
+                        if expected_sequence != packet.seq_num:
+                            print "DID NOT GET THE CORRECT EXPECTED SEQUENCE"
+                        elif packet.fin:
+                            print "got a fin!"
+                            self.log_handler.remove_entry(key)
+                        else:
+                            #got a data packet of some sort
+                            log_contents = self.log_handler.handle_log(packet,pkt_dir)
+                            if log_contents != None:
+                                self.fw_rules.check_http(packet)
         elif verdict == "deny":
             ## ADD rule about syn
             rst_pkt = self.packet_service.packet_to_data(packet)
             self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
-            return
         else:
-            print verdict
             self.send_pkt(pkt_dir, pkt)
         return
 
