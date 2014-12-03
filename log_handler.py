@@ -36,7 +36,7 @@ class Log_Handler(object):
 
 			temp_buff = self.response_buffer + partial_response_string
 			response_lines = partial_response_string.lower().split("\r\n")
-
+			print "YOOOOO"
 			if "\r\n\r\n" in temp_buff:
 				for response_line in response_lines:
 					if self.response_complete:
@@ -56,7 +56,7 @@ class Log_Handler(object):
 
 			temp_buff = self.request_buffer + partial_request_string
 			request_lines = temp_buff.lower().split("\r\n")
-
+			print "YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
 			if "\r\n\r\n" in temp_buff:
 				print request_lines
 				for request_line in request_lines:

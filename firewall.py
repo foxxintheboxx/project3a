@@ -24,6 +24,7 @@ class Firewall:
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
+        print "\n\n\n\n"
         packet = self.packet_service.data_to_packet(pkt, pkt_dir)
 
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
@@ -47,6 +48,17 @@ class Firewall:
                     print "http ack"
                 else:
                     print "got in hereeee"
+                    if pkt_dir == PKT_DIR_OUTGOING:
+                        int_port = packet.src_port
+                        ext_ip = packet.dest_ip
+                        key = (int_port, ext_ip)
+                        #print "current non-ack packet sequence number:", self.log_handler.handle_log("")
+                    else:
+                        int_port = packet.dst_port
+                        ext_ip = packet.src_ip
+                        key = (int_port, ext_ip)
+                        #print "current non-ack packet sequence number:", self.log_handler.handle_log("")
+                    
                     log_contents = self.log_handler.handle_log(packet, pkt_dir)
             if log_contents != None:
                 self.fw_rules.check_http(packet)
