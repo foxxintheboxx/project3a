@@ -34,9 +34,9 @@ class Packet(object):
         self.dns_query = None
         self.is_DNS = False
         self.dns_question_bytes = None
-        self.qname_bytes = None
         self.dns_id = None
         self.dns_opcode_plus = None
+        self.dns_qtype = None
 
 
 

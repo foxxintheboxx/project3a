@@ -1,4 +1,5 @@
 from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
+import socket, struct
 class FireWall_Rules(object):
 
     def __init__(self, rules_str):
@@ -46,14 +47,17 @@ class FireWall_Rules(object):
         return verdict
 
 
-    def check_http(self, packet_class):
+    def check_http(self, packet_class,ext_ip):
         packet_http = packet_class.http_contents
         print "checking http"
         #pull out the http contents class
+        if packet_http.hostname == None:
+            packet_http.hostname = int2ip(ext_ip)
+
         packet_hostname = packet_http.hostname
         #pull out the httpcontents.hostname
         #check the hostname against the rules we have
-        if http not in self.rule_dictionary:
+        if "http" not in self.rule_dictionary:
             return
         for rule in self.rule_dictionary["http"]:
             if rule.check_http_rule(packet_hostname):
@@ -211,3 +215,6 @@ def ip2int(ip):
         return struct.unpack("!I", packedIP)[0]
     except Exception, e:
         return None
+
+def int2ip(addr):                                                               
+    return socket.inet_ntoa(struct.pack("!I", addr))  

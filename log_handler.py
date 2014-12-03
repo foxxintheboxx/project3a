@@ -10,12 +10,15 @@ class Log_Handler(object):
 	class Log_Buffer():
 		def __init__(self):
 			self.key = None
-
+			self.seen_finack = 0
 			#array of lines of current request
 			#will be complete header when *_complete is true
 			self.current_request = []
 			self.current_response = []
-
+			self.init_req = None
+			self.max_req = None
+			self.init_res = None
+			self.max_res = None
 			self.current_request_index = None
 			self.current_response_index = None
 
@@ -35,7 +38,7 @@ class Log_Handler(object):
 			if self.request_complete:
 				self.response_complete = False
 				self.current_response = []
-				self.current_response_index = self.current_request_index
+
 
 			if self.response_complete:
 				return False
@@ -61,7 +64,7 @@ class Log_Handler(object):
 			if self.response_complete:
 				self.request_complete = False
 				self.current_request = []
-				self.current_request_index = self.current_response_index
+
 
 			if self.request_complete:
 				return
@@ -71,7 +74,7 @@ class Log_Handler(object):
 			if "\r\n\r\n" in temp_buff:
 				for request_line in request_lines:
 					if self.request_complete:
-						self.current_request = ""
+						self.request_buffer = ""
 						break
 					else:
 						if request_line == "":
@@ -88,7 +91,8 @@ class Log_Handler(object):
 	def handle_log(self, pkt, direction):
 
 		#if outgoing --> request
-
+		for i in self.log_dict:
+			print i
 		if direction == PKT_DIR_OUTGOING:
 			key = (pkt.dest_ip, pkt.src_port)
 
@@ -99,7 +103,8 @@ class Log_Handler(object):
 
 			#next index = seqno + contentlength - ip header - tcp header 
 			buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
-
+			pot_max = 0xffffffff + buff.current_request_index
+			buff.max_req = pot_max if (buff.current_request_index < buff.init_req) else buff.current_request_index 
 		else:
 			key = (pkt.src_ip, pkt.dst_port)
 
@@ -107,6 +112,8 @@ class Log_Handler(object):
 
 			http_complete = buff.handle_response(pkt.http_contents_string)
 			buff.current_response_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
+			pot_max = 0xffffffff + buff.current_response_index
+			buff.max_res = pot_max if (buff.current_response_index < buff.init_res) else buff.current_response_index 
 			if http_complete:
 				packet = self.complete_http(key, pkt)
 				print "Completed HTTP Piece!"
@@ -126,6 +133,7 @@ class Log_Handler(object):
 	#return the same packet with changed contents
 	#called by
 	def complete_http(self, key, pkt):
+		log_buff = self.log_dict[key]
 		partial_http_contents = self.parse_request(log_buff.current_request)
 		http_contents = self.parse_response(log_buff.current_response, partial_http_contents)
 		pkt.http_contents = http_contents
@@ -133,20 +141,35 @@ class Log_Handler(object):
 
 	#to be called outside log handler to figure whether the packet should be passed or dropped
 	def get_expected_request_index(self, key):
-		return self.log_dict[key].current_request_index + 1
+		return self.log_dict[key].current_request_index 
 
 	def get_expected_response_index(self, key):
-		return self.log_dict[key].current_response_index + 1
+		return self.log_dict[key].current_response_index 
 
+	def get_expected_request_max(self, key):
+		return self.log_dict[key].max_req 
+
+	def get_expected_response_max(self, key):
+		return self.log_dict[key].max_res 
+
+	def get_expected_response_min(self, key):
+		return self.log_dict[key].init_res
+
+	def get_expected_request_min(self, key):
+		return self.log_dict[key].init_req 
 
 	def parse_request(self, current_request):
+		print current_request == ""
 		lines = current_request
 		contents = self.Http_Contents()
-
+		print current_request
 		request_line = lines.pop(0).split(" ")
 		contents.method = request_line[0]
 		contents.path = request_line[1]
-		contents.version = request_line[2]
+		try:
+			contents.version = request_line[2]
+		except:
+			contents.version = "http/1.1"
 
 		for line in lines:
 			request_line = line.split(" ")
@@ -159,11 +182,11 @@ class Log_Handler(object):
 
 	def parse_response(self, current_response, http_contents):
 		lines = current_response
-
+		print "LINES ", lines
 		for line in lines:
 			response_line = line.split(" ")
 			print "!!!!!!", response_line
-			if response_line == " ":
+			if response_line == " " or len(response_line) < 2:
 				break
 			elif response_line[0] == http_contents.version:
 				http_contents.statuscode = response_line[1]
@@ -177,13 +200,18 @@ class Log_Handler(object):
 		buff = self.Log_Buffer()
 		buff.key = key
 		self.log_dict[key] = buff
-		buff.current_request_index = pkt.seq_num
+		buff.current_request_index = pkt.seq_num + 1
+		buff.init_req = pkt.seq_num
+		buff.max_req = pkt.seq_num
 
 
 
 	def remove_entry(self,key):
-		print "popped the fin"
-		self.log_dict.pop(key)
+		print "popped the fin"		
+		if self.log_dict[key].seen_finack == 0:
+			self.log_dict[key].seen_finack = 1
+		else:
+			self.log_dict.pop(key)
 
 	#@param http_string should be the request string and response string concantenated together
 	#@return an HTTP Contents instance
@@ -247,6 +275,7 @@ class Log_Handler(object):
 				f.write(" ")
 				f.write(self.object_size)
 				f.write("\n")
+				f.flush()
 
 log_handler = Log_Handler()
 request = "GET / HTTP/1.1\nHost: google.com\nUser-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/\nAccept-Encoding: gzip\nAccept-Charset: ISO-8859-1,UTF-8;q=0.7,*;q=0.7\nCache-Control: no-cache\nAccept-Language: de,en;q=0.7,en-us;q=0.3 \n \n"

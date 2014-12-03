@@ -1,5 +1,5 @@
 import packet
-import struct
+import struct, socket
 from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 class Packet_Service(object):
 
@@ -58,11 +58,6 @@ class Packet_Service(object):
                 if (pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 80) or (pkt_dir == PKT_DIR_INCOMING and packet0.src_port == 80):
                     http_offset = 4*int(self.get_end_tcp(pkt,start_trans_header))
                     
-                    print "srcport: ", packet0.src_port
-                    print "dstport: ", packet0.dst_port
-                    print "total-size: ", packet0.total_length
-                    print start_trans_header, "trans header <<__"
-                    print http_offset, "http offsettttt << --"
                     packet0.ip_header_length = start_trans_header
                     packet0.tcp_header_length = http_offset
                     packet0.http_contents_string = self.get_http_contents(pkt, start_trans_header + http_offset)
@@ -87,7 +82,9 @@ class Packet_Service(object):
                         packet0.dns_question_bytes = result[3]
                         packet0.qname_bytes = result[4]
                         packet0.is_DNS = True
-                        
+                    else:
+                        packet0.is_DNS = True
+                        packet0.dns_qtype = 28
                         
                         
                    # if result == -1:
@@ -309,7 +306,7 @@ class Packet_Service(object):
         _rdlength = 4
         cat_ip = 917364886
         dns_answer = packet.qname_bytes + struct.pack("!HHLHL", _type, _class, _ttl, 4, cat_ip)
-        dns_pkt = dns_header + question + dns_answer
+        dns_pkt = dns_header + packet.qname_bytes + struct.pack("!HH", 1, 1) + dns_answer
         return dns_pkt
 
     def craft_dns_header(self, packet):
