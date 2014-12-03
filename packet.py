@@ -8,6 +8,7 @@ class Packet(object):
         self.src_ip = None
         self.dest_ip = None
         self.ip_id = None
+        self.ip_header_length = None
 
 
         #TRANSPORT
@@ -17,6 +18,7 @@ class Packet(object):
         self.trans_length = None 
         self.window = 1 #TCP
         self.syn = False
+        self.tcp_header_length = None
 
         self.icmp_type = None 
         self.protocol = "unknown"

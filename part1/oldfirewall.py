@@ -70,7 +70,6 @@ class Firewall:
                         packet.is_DNS = True
                 except Exception, e:
                     return
-
         elif packet.protocol == "icmp":
             try:
                 packet.icmp_type = self.get_icmp_type(pkt, start_trans_header)
@@ -239,24 +238,23 @@ class FireWall_Rules(object):
         #
         ext_port = None
         ext_ip = None
-        verdict = "pass"
-        if dir == PKT_DIR_OUTGOING:
-            ext_port = pkt.dst_port
-            ext_ip = pkt.dest_ip
+        verdict = "drop"
+        if pkt == PKT_DIR_OUTGOING:
+            ext_port = pkt.dest_ip
+            ext_ip = pkt.dst_port
         else: 
             ext_port = pkt.src_port
             ext_ip = pkt.src_ip
 
         if pkt.protocol == "icmp":
-            ext_port = pkt.icmp_type
+            ext_port = pkt.type
         if pkt.protocol not in self.rule_dictionary:
             return "pass"
         rule_list = self.rule_dictionary[pkt.protocol]
-        print "rule list: ", rule_list
+
         for rule in rule_list:
             condition1 = False
             condition2 = False
-            print 
             if rule.protocol != "dns":
                 if rule.check_port(ext_port):
                     condition1 = True
@@ -264,18 +262,9 @@ class FireWall_Rules(object):
                     condition2 = True
                 if condition1 and condition2:
                     verdict = rule.verdict
-                # print "verdict:", verdict
-                # print "current ext port:", ext_port
-                # print "port Rule: ", rule.port_rule
-                # print "port option: ", rule.ext_port_case
             else: #rule is a DNS_rule
-                print "is dns? ", pkt.is_DNS
-                print "dns_query: ", pkt.dns_query
-                print "rule DNS_query: ", rule.dns_query
                 if pkt.is_DNS and rule.check_dns_query(pkt.dns_query):
                     verdict = rule.verdict
-                    print "hit here!"
-                print "verdict: ", verdict
 
         return verdict
 

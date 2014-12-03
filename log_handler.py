@@ -76,7 +76,8 @@ class Log_Handler(object):
 
 			buff.handle_request(pkt.http_contents_string)
 
-			buff.current_request_index = pkt.seq_num
+			#next index = seqno + contentlength - ip header - tcp header 
+			buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
 
 		else:
 			key = (pkt.src_ip, pkt.dst_port)
@@ -87,7 +88,7 @@ class Log_Handler(object):
 			buff = self.log_dict[key]
 
 			http_complete = buff.handle_response(pkt.http_contents_string)
-			buff.current_response_index = pkt.seq_num
+			buff.current_response_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
 			if http_complete:
 				packet = self.complete_http(key, pkt)
 				print "Completed HTTP Piece!"
