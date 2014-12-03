@@ -25,7 +25,7 @@ class Firewall:
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
-        print "\n\n\n\n"
+        print "\n"
         packet = self.packet_service.data_to_packet(pkt, pkt_dir)
         # number = random.randint(1,6)
         # if number == 3:
@@ -47,7 +47,6 @@ class Firewall:
                 ext_port = packet.dst_port
 
             if (packet.protocol == "tcp") and (ext_port == 80):
-
                 if pkt_dir == PKT_DIR_OUTGOING:
                     int_port = packet.src_port
                     ext_ip = packet.dest_ip
@@ -77,6 +76,7 @@ class Firewall:
                         else:
                             print "response packet"
                             if key not in self.log_handler.log_dict:
+                                print "XXXXXXXXXX"
                                 self.send_pkt(pkt_dir, pkt)
                                 return
                             else:
@@ -86,6 +86,7 @@ class Firewall:
                         print "expected sequence number: ", expected_sequence
 
                         if expected_sequence != packet.seq_num:
+                            print "something went ARWYYYYYYYYYYYY"
                             return
                         elif packet.fin and packet.ack:
                             print "got a fin ack!"
@@ -93,6 +94,7 @@ class Firewall:
                         else:
                             #got a data packet of some sort
                             log_contents = self.log_handler.handle_log(packet,pkt_dir)
+                            
                             if log_contents != None:
                                 self.fw_rules.check_http(packet, ext_ip)
             self.send_pkt(pkt_dir, pkt)

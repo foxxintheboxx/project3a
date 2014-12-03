@@ -207,7 +207,7 @@ class Packet_Service(object):
     def get_http_contents(self, pkt, offset):
         content = pkt[offset:]
         print "HTTTTTTP CONTENT: "
-        print content
+        #print content
         return content
 
 
@@ -218,7 +218,6 @@ class Packet_Service(object):
         response[1] = self.dns_opcode_plus(dns_header)
         qd_count_byte = dns_header[4:6]
         qd_count = struct.unpack("!H", qd_count_byte)[0]
-        print "1.1"
         if qd_count != 1:
             return None
         offset = offset + 12
