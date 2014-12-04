@@ -30,7 +30,10 @@ class Packet_Service(object):
             return None
         packet0.total_length = self.total_length(pkt)
         packet0.ip_id = self.get_ip_id(pkt)
-        proto_dec = self.get_protocol(pkt)
+        try:
+            proto_dec = self.get_protocol(pkt)
+        except:
+            return
         packet0.set_protocol(proto_dec)
         src = dst = None
 
@@ -55,7 +58,7 @@ class Packet_Service(object):
                 packet0.seq_num = self.seq_number(pkt, start_trans_header)
 
 
-                if (pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 80) or (pkt_dir == PKT_DIR_INCOMING and packet0.src_port == 80):
+                if packet0.dst_port == 80:
                     http_offset = 4*int(self.get_end_tcp(pkt,start_trans_header))
                     
                     packet0.ip_header_length = start_trans_header
