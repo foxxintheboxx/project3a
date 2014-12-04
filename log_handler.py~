@@ -90,14 +90,12 @@ class Log_Handler(object):
                                 
                         
                         exp = buff.current_request_index
-                        print exp
-                        print pkt.seq_num
                         if exp != pkt.seq_num:
                            if exp < pkt.seq_num:
                               retval[1] = "drop"
                               return
                         #on track so increment
-                        buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
+                        buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length % (0xffffffff - 1)
 			buff.handle_request(pkt.http_contents_string)
 
 			#next index = seqno + contentlength - ip header - tcp header

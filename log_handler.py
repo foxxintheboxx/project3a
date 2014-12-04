@@ -95,7 +95,7 @@ class Log_Handler(object):
                               retval[1] = "drop"
                               return
                         #on track so increment
-                        buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
+                        buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length % (0xffffffff - 1)
 			buff.handle_request(pkt.http_contents_string)
 
 			#next index = seqno + contentlength - ip header - tcp header
@@ -117,7 +117,7 @@ class Log_Handler(object):
 				   retval[1] = "drop"
                                 return retval
 			http_complete = buff.handle_response(pkt.http_contents_string)
-			buff.current_response_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
+			buff.current_response_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length % (0xffffffff - 1)
 			if http_complete:
 				packet = self.complete_http(key, pkt)
 				retval[0] = packet
