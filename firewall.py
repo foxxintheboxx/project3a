@@ -36,6 +36,10 @@ class Firewall:
             #if it is an unmatching response, drop it
             #else, send it
             #log i
+            print "expect"
+            self.log_handler.get_expected_request_index(packet.dest_ip, packet.src_port)
+            print "got"
+            packet.seq_num
             if pkt_dir == PKT_DIR_INCOMING:
                 ext_port = packet.src_port
             else:

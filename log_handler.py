@@ -83,16 +83,14 @@ class Log_Handler(object):
 
 			#if its a new request
 			if key not in self.log_dict:
-				buff = self.Log_Buffer()
-				buff.key = key
-				self.log_dict[key] = buff
+				buff = self.create_entry(key, pkt)
 			else:	
 				buff = self.log_dict[key]
 
 			buff.handle_request(pkt.http_contents_string)
                         print "current request"
                         print buff.current_request
-			#next index = seqno + contentlength - ip header - tcp header 
+			#next index = seqno + contentlength - ip header - tcp header
 			buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
 
 		else:
@@ -112,6 +110,12 @@ class Log_Handler(object):
 
 		return None
 
+	def create_entry(self, key, packet):
+			buff = self.Log_Buffer()
+			buff.key = key
+			self.log_dict[key] = buff
+			buff.current_request_index = packet.seq_num + 1
+			return buff
 
 
 	#to be called outside log handler to tell whether a response should be passed through or dropped
@@ -142,11 +146,11 @@ class Log_Handler(object):
 	#to be called outside log handler to figure whether the packet should be passed or dropped
 	def get_expected_request_index(self, dest_ip, source_port):
 		key = (dest_ip, source_port)
-		return self.log_dict[key].current_request_index + 1
+		return self.log_dict[key].current_request_index
 
 	def get_expected_response_index(self, src_ip, destination_port):
 		key = (src_ip, destination_port)
-		return self.log_dict[key].current_response_index + 1
+		return self.log_dict[key].current_response_index
 
 
 	def parse_request(self, current_request):

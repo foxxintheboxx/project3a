@@ -48,6 +48,8 @@ class Packet_Service(object):
             try:
                 flags = self.get_tcp_flags(pkt, start_trans_header)
                 packet0.syn = ((flags & 0x02) >> 1) == 1
+                packet0.ack = (flags & 0x10) > 1
+                packet0.fin = (flags & 0x01) == 1
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
                 packet0.seq_num = self.seq_number(pkt, start_trans_header)
