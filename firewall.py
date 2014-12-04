@@ -31,7 +31,6 @@ class Firewall:
 
         if verdict == "pass":
             #print "sending here!!"
-            self.send_pkt(pkt_dir, pkt)
             #if its not the right seq number, drop it
             #if it is an unmatching response, drop it
             #else, send it
@@ -42,12 +41,15 @@ class Firewall:
                 ext_port = packet.dst_port
 
             log_contents = None
+            sub_verdict = "pass"
             if (packet.protocol == "tcp") and (ext_port == 80):
                 if packet.http_contents_string== "":
                     jack_shit = 1 # this does jack shit
                 else:
                     try:
-                    	log_contents = self.log_handler.handle_log(packet, pkt_dir)
+                    	tup = self.log_handler.handle_log(packet, pkt_dir)
+                        log_contents = tup[0]
+                        sub_verdict = tup[1]
                     except Exception, e:
                         print e
                         return
@@ -58,6 +60,8 @@ class Firewall:
                    self.fw_rules.check_http(packet)
                 except:
                    return
+            if sub_verdict == "pass":
+                self.send_pkt(pkt_dir, pkt)
             
         elif verdict == "deny" or verdict == "drop":
             ## ADD rule about syn

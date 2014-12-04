@@ -77,7 +77,7 @@ class Log_Handler(object):
 	def handle_log(self, pkt, direction):
 
 		#if outgoing --> request
-
+		retval = [None, "pass"]
 		if direction == PKT_DIR_OUTGOING:
 			key = (pkt.dest_ip, pkt.src_port)
 
@@ -92,7 +92,10 @@ class Log_Handler(object):
                         exp = buff.current_request_index
                         print exp
                         print pkt.seq_num
-                        
+                        if exp != pkt.seq_num:
+                           if exp < pkt.seq_num:
+                              retval[1] = "drop"
+                              return
                         #on track so increment
                         buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
 			buff.handle_request(pkt.http_contents_string)
@@ -106,21 +109,23 @@ class Log_Handler(object):
 			key = (pkt.src_ip, pkt.dst_port)
 
 			if key not in self.log_dict:
-				return None 
+				return [None, "pass"]
 			buff = self.log_dict[key]
                         if buff.current_response_index == None:
                         	buff.current_response_index = pkt.seq_num
-	                print "RES"
-                        print buff.current_response_index
-                        print pkt.seq_num
-                        print ""
+
+                        if buff.current_response_index != pkt.seq_num:
+				if buff.current_response_index < pkt.seq_num:
+				   retval[1] = "drop"
+                                return retval
 			http_complete = buff.handle_response(pkt.http_contents_string)
 			buff.current_response_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
 			if http_complete:
 				packet = self.complete_http(key, pkt)
-				return packet
+				retval[0] = packet
+                                return retval
 
-		return None
+		return retval
 
 	def create_entry(self, key, packet):
 			buff = self.Log_Buffer()
