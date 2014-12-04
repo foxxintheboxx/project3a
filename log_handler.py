@@ -84,15 +84,15 @@ class Log_Handler(object):
 			#if its a new request
 			if key not in self.log_dict:
 				buff = self.create_entry(key, pkt)
-                                
+                                buff.current_request_index = pkt.seq_num
 			else:	
 				buff = self.log_dict[key]
-                                exp = buff.current_request_index
-                                buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
+                                
+                        
                         exp = buff.current_request_index
-
-                        #if exp != pkt.seq_num:
-                        #   return None
+                        print exp
+                        print pkt.seq_num
+                        
                         #on track so increment
                         buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
 			buff.handle_request(pkt.http_contents_string)
@@ -106,12 +106,14 @@ class Log_Handler(object):
 			key = (pkt.src_ip, pkt.dst_port)
 
 			if key not in self.log_dict:
-
 				return None 
 			buff = self.log_dict[key]
                         if buff.current_response_index == None:
                         	buff.current_response_index = pkt.seq_num
-
+	                print "RES"
+                        print buff.current_response_index
+                        print pkt.seq_num
+                        print ""
 			http_complete = buff.handle_response(pkt.http_contents_string)
 			buff.current_response_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
 			if http_complete:
@@ -124,7 +126,6 @@ class Log_Handler(object):
 			buff = self.Log_Buffer()
 			buff.key = key
 			self.log_dict[key] = buff
-			buff.current_request_index = packet.seq_num
 			return buff
 
 

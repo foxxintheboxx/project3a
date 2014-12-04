@@ -57,7 +57,7 @@ class Packet_Service(object):
 
                 if (pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 80) or (pkt_dir == PKT_DIR_INCOMING and packet0.src_port == 80):
                     http_offset = 4*int(self.get_end_tcp(pkt,start_trans_header))
-                    
+                    print http_offset
 
                     packet0.ip_header_length = start_trans_header
                     packet0.tcp_header_length = http_offset
@@ -86,10 +86,6 @@ class Packet_Service(object):
                         
                         
                         
-                   # if result == -1:
-                        #drop dns packet with qtype 28
-                   #     print -1
-                   #     return None
                 except Exception, e:
                     print e
                     print "failed dns parse"

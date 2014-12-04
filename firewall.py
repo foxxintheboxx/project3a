@@ -48,7 +48,8 @@ class Firewall:
                 else:
                     try:
                     	log_contents = self.log_handler.handle_log(packet, pkt_dir)
-                    except:
+                    except Exception, e:
+                        print e
                         return
 
 
