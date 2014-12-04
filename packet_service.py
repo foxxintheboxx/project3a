@@ -1,5 +1,5 @@
 import packet
-import struct, socket
+import struct
 from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 class Packet_Service(object):
 
@@ -30,10 +30,7 @@ class Packet_Service(object):
             return None
         packet0.total_length = self.total_length(pkt)
         packet0.ip_id = self.get_ip_id(pkt)
-        try:
-            proto_dec = self.get_protocol(pkt)
-        except:
-            return
+        proto_dec = self.get_protocol(pkt)
         packet0.set_protocol(proto_dec)
         src = dst = None
 
@@ -51,16 +48,15 @@ class Packet_Service(object):
             try:
                 flags = self.get_tcp_flags(pkt, start_trans_header)
                 packet0.syn = ((flags & 0x02) >> 1) == 1
-                packet0.fin = ((flags & 0x01) == 1)
-                packet0.ack = ((flags & 0x10) > 1)
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
                 packet0.seq_num = self.seq_number(pkt, start_trans_header)
 
 
-                if packet0.dst_port == 80:
+                if (pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 80) or (pkt_dir == PKT_DIR_INCOMING and packet0.src_port == 80):
                     http_offset = 4*int(self.get_end_tcp(pkt,start_trans_header))
                     
+
                     packet0.ip_header_length = start_trans_header
                     packet0.tcp_header_length = http_offset
                     packet0.http_contents_string = self.get_http_contents(pkt, start_trans_header + http_offset)
@@ -85,9 +81,7 @@ class Packet_Service(object):
                         packet0.dns_question_bytes = result[3]
                         packet0.qname_bytes = result[4]
                         packet0.is_DNS = True
-                    else:
-                        packet0.is_DNS = True
-                        packet0.dns_qtype = 28
+                        
                         
                         
                    # if result == -1:
@@ -159,21 +153,6 @@ class Packet_Service(object):
         offset_nybble = unpacked_byte & 0xF0
         return (offset_nybble>>4)
 
-    def get_syn_flag(self, pkt, ip_offset):
-        offset_byte = pkt[offset+13:offset+14]
-        unpacked_byte = struct.unpack("!B", offset_byte)[0]
-        if (unpacked_byte & 2) > 0:
-            return True
-        else:
-            return False
-    def get_fin_flag(self, pkt, ip_offset):
-        offset_byte = pkt[offset+13 : offset+14]
-        unpacked_byte = struct.unpack("!B", offset_byte)[0]
-        if (unpacked_byte & 1) > 0:
-            return True
-        else:
-            return False
-
     #get icmp type -- firsty byte of icmp header
     def get_icmp_type(self, pkt, offset):
         type_byte = pkt[offset]
@@ -209,7 +188,7 @@ class Packet_Service(object):
 
     def get_http_contents(self, pkt, offset):
         content = pkt[offset:]
-        print "HTTTTTTP CONTENT: "
+        #print "HTTTTTTP CONTENT: "
         #print content
         return content
 
@@ -221,6 +200,7 @@ class Packet_Service(object):
         response[1] = self.dns_opcode_plus(dns_header)
         qd_count_byte = dns_header[4:6]
         qd_count = struct.unpack("!H", qd_count_byte)[0]
+        print "1.1"
         if qd_count != 1:
             return None
         offset = offset + 12
@@ -308,7 +288,7 @@ class Packet_Service(object):
         _rdlength = 4
         cat_ip = 917364886
         dns_answer = packet.qname_bytes + struct.pack("!HHLHL", _type, _class, _ttl, 4, cat_ip)
-        dns_pkt = dns_header + packet.qname_bytes + struct.pack("!HH", 1, 1) + dns_answer
+        dns_pkt = dns_header + packet.qname_bytes + struct.pack("!HH", 1,1) + dns_answer
         return dns_pkt
 
     def craft_dns_header(self, packet):

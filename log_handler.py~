@@ -162,7 +162,7 @@ class Log_Handler(object):
 			request_line = line.split(" ")
 			if request_line == "":
 				break
-			elif str.lower(request_line[0]) == "host:":
+			elif request_line[0] == "host:":
 				contents.hostname = request_line[1]
 
 		return contents 
@@ -175,9 +175,9 @@ class Log_Handler(object):
 			#print "!!!!!!", response_line
 			if response_line == " ":
 				break
-			elif str.lower(response_line[0]) == str.lower(http_contents.version):
+			elif response_line[0] == http_contents.version:
 				http_contents.statuscode = response_line[1]
-			elif str.lower(response_line[0]) == "content-length:":
+			elif response_line[0] == "content-length:":
 				http_contents.object_size = response_line[1]
 
 		return http_contents
