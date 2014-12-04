@@ -36,10 +36,6 @@ class Firewall:
             #if it is an unmatching response, drop it
             #else, send it
             #log i
-            print "expect"
-            self.log_handler.get_expected_request_index(packet.dest_ip, packet.src_port)
-            print "got"
-            packet.seq_num
             if pkt_dir == PKT_DIR_INCOMING:
                 ext_port = packet.src_port
             else:
@@ -54,6 +50,10 @@ class Firewall:
                     log_contents = self.log_handler.handle_log(packet, pkt_dir)
             if log_contents != None:
                 self.fw_rules.check_http(packet)
+            print "expect"
+            self.log_handler.get_expected_request_index(packet.dest_ip, packet.src_port)
+            print "got"
+            packet.seq_num
         elif verdict == "deny":
             ## ADD rule about syn
             rst_pkt = self.packet_service.packet_to_data(packet)
