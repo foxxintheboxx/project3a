@@ -90,8 +90,6 @@ class Log_Handler(object):
                                 
                         
                         exp = buff.current_request_index
-                        print exp
-                        print pkt.seq_num
                         if exp != pkt.seq_num:
                            if exp < pkt.seq_num:
                               retval[1] = "drop"

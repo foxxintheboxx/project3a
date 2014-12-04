@@ -113,10 +113,7 @@ class Log_Handler(object):
 			buff = self.log_dict[key]
                         if buff.current_response_index == None:
                         	buff.current_response_index = pkt.seq_num
-	                print "RES"
-                        print buff.current_response_index
-                        print pkt.seq_num
-                        print ""
+
                         if buff.current_response_index != pkt.seq_num:
 				if buff.current_response_index < pkt.seq_num:
 				   retval[1] = "drop"

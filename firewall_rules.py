@@ -1,4 +1,5 @@
 from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
+import socket, struct
 class FireWall_Rules(object):
 
     def __init__(self, rules_str):
@@ -35,6 +36,8 @@ class FireWall_Rules(object):
             if rule.protocol != "dns":
                 if rule.check_port(ext_port):
                     condition1 = True
+                
+                
                 if rule.check_ip(ext_ip):
                     condition2 = True
                 if condition1 and condition2:
@@ -180,24 +183,28 @@ class FireWall_Rules(object):
 
         def check_port(self, pkt_port):
             #could be any
+            
             if self.ext_port_case == 0:
                 return True
             elif self.ext_port_case == 1:
+                
                 return (pkt_port == self.port_rule)
             else:
                 return ((pkt_port >= self.port_rule[0]) and (pkt_port <= self.port_rule[1]))
 
         #@should be receiving pkt_ip as integer
         def check_ip(self, pkt_ip):
-
+           
             if self.ext_ip_case == 0:
                 return True
             elif self.ext_ip_case == 1:
+                
                 response = self.parent.get_country(pkt_ip)
                 if response == None:
                    return False
                 return self.ip_rule.lower() == response.lower()
             elif self.ext_ip_case == 2:
+                
                 return self.ip_rule == pkt_ip
             else:
                 ## figure out difference between 32 and second

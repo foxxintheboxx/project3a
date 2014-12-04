@@ -25,10 +25,10 @@ class Firewall:
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
         packet = self.packet_service.data_to_packet(pkt, pkt_dir)
-
+        if pkt_dir == PKT_DIR_OUTGOING and packet.is_AAAA == True:
+            return
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
         #print packet.http_contents == ""
-
         if verdict == "pass":
             #print "sending here!!"
             #if its not the right seq number, drop it

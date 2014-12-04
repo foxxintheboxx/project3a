@@ -83,6 +83,8 @@ class Packet_Service(object):
                         packet0.dns_question_bytes = result[3]
                         packet0.qname_bytes = result[4]
                         packet0.is_DNS = True
+                    if result == 12:
+                        packet0.is_AAAA = True
                         
                         
                         
@@ -227,7 +229,7 @@ class Packet_Service(object):
         ##I eliminated QTYPE == 28 (AAAA) 
         if q_type == 28:
             # some flag to indicate to drop because otherwise it would think it is just udp
-            return -1 
+            return 12 
 
         if q_class != 1:
             #not dns
