@@ -58,7 +58,7 @@ class Log_Handler(object):
 			request_lines = temp_buff.split("\r\n")
 
 			if "\r\n\r\n" in temp_buff:
-				print request_lines
+
 				for request_line in request_lines:
 					if self.request_complete:
 						break
@@ -84,28 +84,38 @@ class Log_Handler(object):
 			#if its a new request
 			if key not in self.log_dict:
 				buff = self.create_entry(key, pkt)
+                                
 			else:	
 				buff = self.log_dict[key]
+                                exp = buff.current_request_index
+                                buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
+                        exp = buff.current_request_index
 
+                        #if exp != pkt.seq_num:
+                        #   return None
+                        #on track so increment
+                        buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
 			buff.handle_request(pkt.http_contents_string)
-                        print "current request"
-                        print buff.current_request
+
 			#next index = seqno + contentlength - ip header - tcp header
-			buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
+			
 
 		else:
+
+                        
 			key = (pkt.src_ip, pkt.dst_port)
 
 			if key not in self.log_dict:
-				print "i think something went awry"
-				return None
+
+				return None 
 			buff = self.log_dict[key]
+                        if buff.current_response_index == None:
+                        	buff.current_response_index = pkt.seq_num
 
 			http_complete = buff.handle_response(pkt.http_contents_string)
 			buff.current_response_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length
 			if http_complete:
 				packet = self.complete_http(key, pkt)
-				#print "Completed HTTP Piece!"
 				return packet
 
 		return None
@@ -114,7 +124,7 @@ class Log_Handler(object):
 			buff = self.Log_Buffer()
 			buff.key = key
 			self.log_dict[key] = buff
-			buff.current_request_index = packet.seq_num + 1
+			buff.current_request_index = packet.seq_num
 			return buff
 
 
@@ -146,10 +156,12 @@ class Log_Handler(object):
 	#to be called outside log handler to figure whether the packet should be passed or dropped
 	def get_expected_request_index(self, dest_ip, source_port):
 		key = (dest_ip, source_port)
-		return self.log_dict[key].current_request_index
+                if key in self.log_dict:
+		   return self.log_dict[key].current_request_index
 
 	def get_expected_response_index(self, src_ip, destination_port):
 		key = (src_ip, destination_port)
+                 
 		return self.log_dict[key].current_response_index
 
 

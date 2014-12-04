@@ -17,10 +17,10 @@ class FireWall_Rules(object):
         #     return "pass"
         ext_port = None
         ext_ip = None
-        verdict = "drop"
-        if pkt == PKT_DIR_OUTGOING:
-            ext_port = pkt.dest_port
-            ext_ip = pkt.dst_ip
+        verdict = "pass"
+        if dir == PKT_DIR_OUTGOING:
+            ext_port = pkt.dst_port
+            ext_ip = pkt.dest_ip
         else: 
             ext_port = pkt.src_port
             ext_ip = pkt.src_ip
@@ -41,21 +41,20 @@ class FireWall_Rules(object):
                     verdict = rule.verdict
             else: #rule is a DNS_rule
                 if pkt.is_DNS and rule.check_dns_query(pkt.dns_query):
+                    
                     verdict = rule.verdict
-
         return verdict
 
 
     def check_http(self, packet_class):
         packet_http = packet_class.http_contents
-        print "checking http"
         #pull out the http contents class
         packet_hostname = packet_http.hostname
         #pull out the httpcontents.hostname
         #check the hostname against the rules we have
         for rule in self.rule_dictionary["http"]:
             if rule.check_http_rule(packet_hostname):
-                print "host passed: ", packet_hostname
+
                 packet_http.writeback()
                 break
         #if it passes, call the http_contents.writeback method
@@ -127,14 +126,17 @@ class FireWall_Rules(object):
             rev_pkt_dns = pkt_dns[::-1]
             dns_query = self.dns_query[::-1]
             index = 0
+
             for el in rev_pkt_dns:
                 if index < len(dns_query) and el == dns_query[index]:
                     index += 1
                     continue
                 elif index < len(dns_query) and dns_query[index] == "*":
-                    break
+                    return True
                 else:
                     return False
+            if len(rev_pkt_dns) != len(dns_query):
+              return False
             return True
 
     class Rule(object):

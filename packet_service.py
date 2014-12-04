@@ -71,7 +71,7 @@ class Packet_Service(object):
                 packet0.src_port = int(self.get_src_port_std(pkt, start_trans_header))
                 packet0.dst_port = int(self.get_dst_port_std(pkt, start_trans_header))
             except:
-                print "failed src_port"
+
                 return None
             if pkt_dir == PKT_DIR_OUTGOING and packet0.dst_port == 53:
                 try:
@@ -86,10 +86,6 @@ class Packet_Service(object):
                         
                         
                         
-                   # if result == -1:
-                        #drop dns packet with qtype 28
-                   #     print -1
-                   #     return None
                 except Exception, e:
                     print e
                     print "failed dns parse"
@@ -190,8 +186,7 @@ class Packet_Service(object):
 
     def get_http_contents(self, pkt, offset):
         content = pkt[offset:]
-        #print "HTTTTTTP CONTENT: "
-        #print content
+
         return content
 
 
@@ -202,7 +197,6 @@ class Packet_Service(object):
         response[1] = self.dns_opcode_plus(dns_header)
         qd_count_byte = dns_header[4:6]
         qd_count = struct.unpack("!H", qd_count_byte)[0]
-        print "1.1"
         if qd_count != 1:
             return None
         offset = offset + 12

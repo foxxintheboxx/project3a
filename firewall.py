@@ -44,24 +44,27 @@ class Firewall:
             log_contents = None
             if (packet.protocol == "tcp") and (ext_port == 80):
                 if packet.http_contents_string== "":
-                    print "http ack"
+                    jack_shit = 1 # this does jack shit
                 else:
-                    print "got in hereeee"
-                    log_contents = self.log_handler.handle_log(packet, pkt_dir)
+                    try:
+                    	log_contents = self.log_handler.handle_log(packet, pkt_dir)
+                    except:
+                        return
+
+
             if log_contents != None:
-                self.fw_rules.check_http(packet)
-            print "expect"
-            self.log_handler.get_expected_request_index(packet.dest_ip, packet.src_port)
-            print "got"
-            packet.seq_num
-        elif verdict == "deny":
+                try:
+                   self.fw_rules.check_http(packet)
+                except:
+                   return
+            
+        elif verdict == "deny" or verdict == "drop":
             ## ADD rule about syn
             rst_pkt = self.packet_service.packet_to_data(packet)
             if pkt_dir == PKT_DIR_OUTGOING:
             	self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
             return
         else:
-            #print verdict
             self.send_pkt(pkt_dir, pkt)
         return
 
