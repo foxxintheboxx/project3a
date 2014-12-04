@@ -84,26 +84,24 @@ class Log_Handler(object):
 			#if its a new request
 			if key not in self.log_dict:
 				buff = self.create_entry(key, pkt)
-                                buff.current_request_index = pkt.seq_num
+                    buff.current_request_index = pkt.seq_num
 			else:	
 				buff = self.log_dict[key]
                                 
-                        
-                        exp = buff.current_request_index
-                        if exp != pkt.seq_num:
-                           if exp < pkt.seq_num:
-                              retval[1] = "drop"
-                              return
-                        #on track so increment
-                        buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length % (0xffffffff - 1)
+                 
+                    exp = buff.current_request_index
+                    if exp != pkt.seq_num:
+                       if exp < pkt.seq_num:
+                          retval[1] = "drop"
+                          return
+                    #on track so increment
+                    buff.current_request_index = pkt.seq_num + pkt.total_length - pkt.ip_header_length - pkt.tcp_header_length % (0xffffffff - 1)
 			buff.handle_request(pkt.http_contents_string)
 
 			#next index = seqno + contentlength - ip header - tcp header
 			
-
 		else:
 
-                        
 			key = (pkt.src_ip, pkt.dst_port)
 
 			if key not in self.log_dict:
@@ -204,36 +202,6 @@ class Log_Handler(object):
 
 
 
-	#@param http_string should be the request string and response string concantenated together
-	#@return an HTTP Contents instance
-	# def http_parser(self, http_string):
-	# 	lines = http_string.lower().split("\n")
-	# 	line_num = 0
-	# 	contents = self.Http_Contents()
-	# 	for line in lines:
-	# 		request_line_contents = line.split(" ")
-	# 		if len(request_line_contents) == 0:
-	# 			break
-
-	# 		#if payload, continue
-
-	# 		if request_line_contents[0] in ["post","get", "put","drop"]:
-	# 			contents.method = request_line_contents[0]
-	# 			contents.path = request_line_contents[1]
-	# 			contents.version = request_line_contents[2]
-
-	# 		elif request_line_contents[0] == "host:":
-	# 			contents.hostname = request_line_contents[1]
-
-	# 		elif request_line_contents[0] == "content-length:":
-	# 			contents.object_size = request_line_contents[1]
-
-	# 		elif "http" in request_line_contents[0]:
-	# 			contents.statuscode = request_line_contents[1]
-	# 	return contents
-
-
-
 	class Http_Contents(object):
 		def __init__(self):
 			self.hostname = None
@@ -255,17 +223,29 @@ class Log_Handler(object):
 		def writeback(self):
 			with open("http.log", "a") as f:
 				f.write(self.hostname)
+				f.flush()
 				f.write(" ")
+				f.flush()
 				f.write(self.method)
+				f.flush()
 				f.write(" ") 
+				f.flush()
 				f.write(self.path)
+				f.flush()
 				f.write(" ")
+				f.flush()
 				f.write(self.version)
+				f.flush()
 				f.write(" ")
+				f.flush()
 				f.write(self.statuscode)
+				f.flush()
 				f.write(" ")
+				f.flush()
 				f.write(self.object_size)
+				f.flush()
 				f.write("\n")
+				f.flush()
 
 log_handler = Log_Handler()
 request = "GET / HTTP/1.1\nHost: google.com\nUser-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/\nAccept-Encoding: gzip\nAccept-Charset: ISO-8859-1,UTF-8;q=0.7,*;q=0.7\nCache-Control: no-cache\nAccept-Language: de,en;q=0.7,en-us;q=0.3 \n \n"

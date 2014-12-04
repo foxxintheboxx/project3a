@@ -37,13 +37,15 @@ class Firewall:
             #log i
             if pkt_dir == PKT_DIR_INCOMING:
                 ext_port = packet.src_port
+                ext_ip = packet.src_ip
             else:
                 ext_port = packet.dst_port
+                ext_ip = packet.dest_ip
 
             log_contents = None
             sub_verdict = "pass"
             if (packet.protocol == "tcp") and (ext_port == 80):
-                if packet.http_contents_string== "":
+                if packet.http_contents_string ==  "":
                     jack_shit = 1 # this does jack shit
                 else:
                     try:
@@ -57,7 +59,7 @@ class Firewall:
 
             if log_contents != None:
                 try:
-                   self.fw_rules.check_http(packet)
+                   self.fw_rules.check_http(packet, ext_ip)
                 except:
                    return
             if sub_verdict == "pass":

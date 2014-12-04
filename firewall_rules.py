@@ -49,12 +49,17 @@ class FireWall_Rules(object):
         return verdict
 
 
-    def check_http(self, packet_class):
+    def check_http(self, packet_class, ext_ip):
         packet_http = packet_class.http_contents
         #pull out the http contents class
-        packet_hostname = packet_http.hostname
+        if packet_hostname == None:
+            packet_hostname = int2ip(ext_ip)
+        else:
+            packet_hostname = packet_http.hostname
         #pull out the httpcontents.hostname
         #check the hostname against the rules we have
+        if "http" not in self.rule_dictionary:
+            return
         for rule in self.rule_dictionary["http"]:
             if rule.check_http_rule(packet_hostname):
 
@@ -116,7 +121,7 @@ class FireWall_Rules(object):
                     break
                 else:
                     return False
-            return True
+            return True if len(self_hostname) == len(rev_hostname) else False
 
     class DNS_Rule(object):
         def __init__(self):
@@ -218,3 +223,6 @@ def ip2int(ip):
         return struct.unpack("!I", packedIP)[0]
     except Exception, e:
         return None
+
+def int2ip(addr):                                                               
+    return socket.inet_ntoa(struct.pack("!I", addr))
