@@ -25,7 +25,7 @@ class Firewall:
         # TODO: Your main firewall code will be here.
         packet = self.packet_service.data_to_packet(pkt, pkt_dir)
         if pkt_dir == PKT_DIR_OUTGOING and packet.is_AAAA == True:
-            x = 1
+            pass
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
         #print packet.http_contents == ""
         if verdict == "pass":
@@ -748,7 +748,7 @@ class Packet_Service(object):
         offset_byte = pkt[offset+12: offset+13]
         unpacked_byte = struct.unpack("!B", offset_byte)[0]
         offset_nybble = unpacked_byte & 0xF0
-        return (80>>4)
+        return (offset_nybble>>4)
 
     #get icmp type -- firsty byte of icmp header
     def get_icmp_type(self, pkt, offset):
