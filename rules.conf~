@@ -1,4 +1,0 @@
-%a
-log http *.berkeley.edu
-deny dns www.facebook.com
-deny tcp any any

@@ -25,7 +25,7 @@ class Firewall:
         # TODO: Your main firewall code will be here.
         packet = self.packet_service.data_to_packet(pkt, pkt_dir)
         if pkt_dir == PKT_DIR_OUTGOING and packet.is_AAAA == True:
-            x = 1
+            return
         verdict = self.fw_rules.check_rules(packet, pkt_dir)
         #print packet.http_contents == ""
         if verdict == "pass":
@@ -66,7 +66,7 @@ class Firewall:
             ## ADD rule about syn
             rst_pkt = self.packet_service.packet_to_data(packet)
             if pkt_dir == PKT_DIR_OUTGOING:
-                self.send_pkt(PKT_DIR_INCOMING, rst_pkt) if not packet.is_AAAA else 1  
+                self.send_pkt(PKT_DIR_INCOMING, rst_pkt)
             return
         else:
             self.send_pkt(pkt_dir, pkt)
@@ -680,8 +680,8 @@ class Packet_Service(object):
                         packet0.dns_question_bytes = result[3]
                         packet0.qname_bytes = result[4]
                         packet0.is_DNS = True
-                        result == 12
-                        packet0.is_AAAA = result[5]
+                    if result == 12:
+                        packet0.is_AAAA = True
                         
                         
                         
@@ -748,7 +748,7 @@ class Packet_Service(object):
         offset_byte = pkt[offset+12: offset+13]
         unpacked_byte = struct.unpack("!B", offset_byte)[0]
         offset_nybble = unpacked_byte & 0xF0
-        return (80>>4)
+        return (offset_nybble>>4)
 
     #get icmp type -- firsty byte of icmp header
     def get_icmp_type(self, pkt, offset):
@@ -790,7 +790,7 @@ class Packet_Service(object):
 
 
     def parse_dns(self, pkt, offset):
-        response = ["ID", "OPCODE", "QUERY", "QUESTION", "QNAME_BYTE" ,False]
+        response = ["ID", "OPCODE", "QUERY", "QUESTION", "QNAME_BYTE"]
         dns_header = pkt[offset:offset+12]
         response[0] = self.dns_id(dns_header)
         response[1] = self.dns_opcode_plus(dns_header)
@@ -826,9 +826,8 @@ class Packet_Service(object):
         ##I eliminated QTYPE == 28 (AAAA) 
         if q_type == 28:
             # some flag to indicate to drop because otherwise it would think it is just udp
-            response[5]=True
-        elif q_type != 1:
-            return
+            return 12 
+
         if q_class != 1:
             #not dns
             return None

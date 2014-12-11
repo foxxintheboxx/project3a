@@ -1,7 +1,0 @@
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/ HTTP/1.1 200 273
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/content.html HTTP/1.1 200 1569
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/overview.html HTTP/1.1 200 2581
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/images/Keycard_A.png HTTP/1.1 200 324
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/images/Book.png HTTP/1.1 200 174
-www.eecs.berkeley.edu GET /Includes/EECS-images/eecslogo.gif HTTP/1.1 200 828
-www-inst.eecs.berkeley.edu GET /favicon.ico HTTP/1.1 200 0
